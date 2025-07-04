@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Productos - Panadería</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="dashboard-header">
+    <h1>Gestión de Productos</h1>
+    <div class="user-info">
+      <span id="userWelcome"></span>
+      <a href="index.html" class="back-btn">← Dashboard</a>
+      <button onclick="logout()" class="logout-btn">Cerrar Sesión</button>
+    </div>
+  </header>
+  
+  <main class="dashboard-content">
+    <div class="management-container">
+      <div class="form-section">
+        <h2>Agregar Nuevo Producto</h2>
+        <form id="formProducto">
+    <div class="form-group">
+      <label for="nombre">Nombre:</label>
+      <input type="text" placeholder="Nombre del producto" id="nombre" required />
+    </div>
+    
+    <div class="form-group">
+      <label for="descripcion">Descripción:</label>
+      <input type="text" placeholder="Descripción del producto" id="descripcion" required />
+    </div>
+    
+    <div class="form-group">
+      <label for="precio">Precio:</label>
+      <input type="number" step="0.01" placeholder="Precio" id="precio" required />
+    </div>
+    
+    <div class="form-group">
+      <label for="stock">Stock:</label>
+      <input type="number" step="1" min="0" placeholder="Cantidad en stock (unidades enteras)" id="stock" required />
+    </div>
+    
+    <div class="form-group">
+      <label for="unidad">Unidad:</label>
+      <select id="unidad" required>
+        <option value="">Seleccionar unidad...</option>
+        <option value="unidad">Unidad</option>
+        <option value="kg">Kilogramo</option>
+        <option value="gr">Gramo</option>
+        <option value="litro">Litro</option>
+        <option value="paquete">Paquete</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label for="categoria">Categoría:</label>
+      <select id="categoria" required>
+        <option value="">Seleccionar categoría...</option>
+        <option value="pan">Pan</option>
+        <option value="pasteles">Pasteles</option>
+        <option value="galletas">Galletas</option>
+        <option value="bebidas">Bebidas</option>
+        <option value="otros">Otros</option>
+      </select>
+    </div>
+    
+    <div class="form-group" id="sedeGroup">
+      <label for="sede_id">Sede:</label>
+      <select id="sede_id" required>
+        <option value="">Seleccionar sede...</option>
+      </select>
+    </div>
+    
+          <button type="submit">Crear Producto</button>
+        </form>
+      </div>
+      
+      <div class="table-section">
+        <h2>Lista de Productos</h2>
+        <div class="pagination-info">
+          <span id="paginationInfo">Cargando productos...</span>
+        </div>
+        <div class="table-container">
+          <table id="productosTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th>Unidad</th>
+                <th>Categoría</th>
+                <th>Sede</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="productosTableBody">
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination-controls">
+          <button id="prevBtn" onclick="previousPage()" disabled>← Anterior</button>
+          <div class="pagination-numbers" id="paginationNumbers">
+          </div>
+          <button id="nextBtn" onclick="nextPage()" disabled>Siguiente →</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script>
+    // Pagination state
+    let currentPage = 1;
+    let totalPages = 0;
+    let currentUserData = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      const userData = checkAuth();
+      currentUserData = userData;
+      setupUserInterface(userData);
+      loadSedes(userData);
+      loadProducts();
+    });
+
+    function setupUserInterface(userData) {
+      const userWelcome = document.getElementById('userWelcome');
+      if (userData.userType === 'admin') {
+        userWelcome.textContent = `Administrador ${userData.username}`;
+      } else {
+        userWelcome.textContent = `${userData.bakeryName} (${userData.username})`;
+      }
+    }
+
+    async function loadSedes(userData) {
+      try {
+        const response = await fetch(`${API_URL}/sedes/`);
+        const sedes = await response.json();
+        const sedeSelect = document.getElementById('sede_id');
+        const sedeGroup = document.getElementById('sedeGroup');
+        
+        sedeSelect.innerHTML = '<option value="">Seleccionar sede...</option>';
+        
+        if (userData.userType === 'admin') {
+          // Admin can select any sede
+          sedes.forEach(sede => {
+            const option = document.createElement('option');
+            option.value = sede.idSedes;
+            option.textContent = sede.Nombre;
+            sedeSelect.appendChild(option);
+          });
+        } else if (userData.userType === 'bakery') {
+          // Regular user can only add products to their assigned sedes
+          if (userData.sedes && userData.sedes.length > 0) {
+            userData.sedes.forEach(sedeInfo => {
+              const option = document.createElement('option');
+              option.value = sedeInfo.idSedes;
+              option.textContent = sedeInfo.Nombre;
+              sedeSelect.appendChild(option);
+            });
+          } else {
+            // No assigned sedes
+            sedeSelect.innerHTML = '<option value="">Sin sedes asignadas</option>';
+            sedeSelect.disabled = true;
+          }
+        }
+      } catch (error) {
+        console.error('Error loading sedes:', error);
+      }
+    }
+
+    document.getElementById("formProducto").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const formData = {
+        Nombre: document.getElementById("nombre").value,
+        Descripcion: document.getElementById("descripcion").value,
+        Precio: parseFloat(document.getElementById("precio").value),
+        Stock: parseInt(document.getElementById("stock").value),
+        Unidad: document.getElementById("unidad").value,
+        Categoria: document.getElementById("categoria").value,
+        Sede_id: parseInt(document.getElementById("sede_id").value)
+      };
+
+      try {
+        const response = await fetch(`${API_URL}/productos/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          alert("Producto creado exitosamente");
+          document.getElementById("formProducto").reset();
+          loadProducts(); // Reload the products table
+        } else {
+          const error = await response.json();
+          alert("Error al crear producto: " + JSON.stringify(error));
+        }
+      } catch (error) {
+        alert("Error de conexión: " + error.message);
+      }
+    });
+
+    async function loadProducts(page = 1) {
+      const userData = currentUserData || checkAuth();
+      const limit = 50;
+      const offset = (page - 1) * limit;
+      let url = `${API_URL}/productos/?limit=${limit}&offset=${offset}`;
+      
+      // For regular users, filter by their assigned sedes
+      if (userData.userType === 'bakery' && userData.userId) {
+        url += `&user_id=${userData.userId}`;
+      }
+      
+      try {
+        const [productosResponse, sedesResponse] = await Promise.all([
+          fetch(url),
+          fetch(`${API_URL}/sedes/`)
+        ]);
+        const data = await productosResponse.json();
+        const sedes = await sedesResponse.json();
+        
+        // Handle both old format (array) and new format (object with pagination)
+        const productos = data.productos || data;
+        const total = data.total || productos.length;
+        totalPages = Math.ceil(total / 50);
+        currentPage = page;
+        
+        // Create sedes lookup map
+        const sedesMap = {};
+        sedes.forEach(sede => {
+          sedesMap[sede.idSedes] = sede.Nombre;
+        });
+        
+        // Update table
+        const tbody = document.getElementById('productosTableBody');
+        tbody.innerHTML = '';
+        productos.forEach(producto => {
+          const sedeNombre = sedesMap[producto.Sede_id] || `Sede ${producto.Sede_id}`;
+          const row = tbody.insertRow();
+          row.innerHTML = `
+            <td>${producto.idProductos}</td>
+            <td>${producto.Nombre}</td>
+            <td>${producto.Descripcion}</td>
+            <td>S/.${producto.Precio.toFixed(2)}</td>
+            <td>${producto.Stock}</td>
+            <td>${producto.Unidad}</td>
+            <td>${producto.Categoria}</td>
+            <td>${sedeNombre}</td>
+            <td>
+              <button class="action-btn edit-btn" onclick="editProduct(${producto.idProductos})">Editar</button>
+              <button class="action-btn delete-btn" onclick="deleteProduct(${producto.idProductos})">Eliminar</button>
+            </td>
+          `;
+        });
+        
+        // Update pagination info and controls
+        updatePaginationInfo(total, page);
+        updatePaginationControls();
+        
+      } catch (error) {
+        console.error('Error loading products:', error);
+        document.getElementById('paginationInfo').textContent = 'Error cargando productos';
+      }
+    }
+
+    function editProduct(id) {
+      alert('Función de editar en desarrollo');
+    }
+
+    async function deleteProduct(id) {
+      if (confirm('¿Está seguro de que desea eliminar este producto?')) {
+        try {
+          const response = await fetch(`${API_URL}/productos/${id}`, {
+            method: 'DELETE'
+          });
+          
+          if (response.ok) {
+            alert('Producto eliminado exitosamente');
+            loadProducts();
+          } else {
+            alert('Error al eliminar producto');
+          }
+        } catch (error) {
+          alert('Error de conexión: ' + error.message);
+        }
+      }
+    }
+
+    function updatePaginationInfo(total, page) {
+      const startItem = total === 0 ? 0 : (page - 1) * 50 + 1;
+      const endItem = Math.min(page * 50, total);
+      
+      document.getElementById('paginationInfo').textContent = 
+        `Mostrando ${startItem}-${endItem} de ${total} productos (Página ${page} de ${totalPages})`;
+    }
+
+    function updatePaginationControls() {
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const numbersContainer = document.getElementById('paginationNumbers');
+      
+      // Update prev/next buttons
+      prevBtn.disabled = currentPage <= 1;
+      nextBtn.disabled = currentPage >= totalPages;
+      
+      // Generate page numbers
+      numbersContainer.innerHTML = '';
+      
+      if (totalPages <= 7) {
+        // Show all pages if 7 or fewer
+        for (let i = 1; i <= totalPages; i++) {
+          createPageButton(i, numbersContainer);
+        }
+      } else {
+        // Show smart pagination for many pages
+        createPageButton(1, numbersContainer);
+        
+        if (currentPage > 4) {
+          numbersContainer.innerHTML += '<span class="pagination-dots">...</span>';
+        }
+        
+        const start = Math.max(2, currentPage - 2);
+        const end = Math.min(totalPages - 1, currentPage + 2);
+        
+        for (let i = start; i <= end; i++) {
+          createPageButton(i, numbersContainer);
+        }
+        
+        if (currentPage < totalPages - 3) {
+          numbersContainer.innerHTML += '<span class="pagination-dots">...</span>';
+        }
+        
+        if (totalPages > 1) {
+          createPageButton(totalPages, numbersContainer);
+        }
+      }
+    }
+
+    function createPageButton(pageNum, container) {
+      const button = document.createElement('button');
+      button.className = `pagination-number ${pageNum === currentPage ? 'active' : ''}`;
+      button.textContent = pageNum;
+      button.onclick = () => goToPage(pageNum);
+      container.appendChild(button);
+    }
+
+    function previousPage() {
+      if (currentPage > 1) {
+        goToPage(currentPage - 1);
+      }
+    }
+
+    function nextPage() {
+      if (currentPage < totalPages) {
+        goToPage(currentPage + 1);
+      }
+    }
+
+    function goToPage(page) {
+      if (page >= 1 && page <= totalPages && page !== currentPage) {
+        loadProducts(page);
+      }
+    }
+  </script>
+</body>
+</html>

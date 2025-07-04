@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Sedes - Panadería</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="dashboard-header">
+    <h1>Gestión de Sedes</h1>
+    <div class="user-info">
+      <span id="userWelcome"></span>
+      <a href="index.html" class="back-btn">← Dashboard</a>
+      <button onclick="logout()" class="logout-btn">Cerrar Sesión</button>
+    </div>
+  </header>
+  
+  <main class="dashboard-content">
+    <div class="management-container">
+      <div class="form-section">
+        <h2>Agregar Nueva Sede</h2>
+        <form id="form-sede">
+          <div class="form-group">
+            <label for="nombre">Nombre de la Sede:</label>
+            <input type="text" id="nombre" placeholder="Nombre de la sede" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="direccion">Dirección:</label>
+            <input type="text" id="direccion" placeholder="Dirección completa" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="usuario_id">Usuario ID:</label>
+            <input type="number" id="usuario_id" placeholder="ID del usuario responsable" required>
+          </div>
+          
+          <button type="submit">Crear Sede</button>
+        </form>
+      </div>
+      
+      <div class="table-section">
+        <h2>Lista de Sedes</h2>
+        <div class="table-container">
+          <table id="sedesTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Dirección</th>
+                <th>Usuario ID</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="sedesTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/sedes.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const userData = checkAuth();
+      if (!userData || userData.userType !== 'admin') {
+        alert('Acceso denegado. Solo administradores pueden gestionar sedes.');
+        window.location.href = 'index.html';
+        return;
+      }
+      
+      setupUserInterface(userData);
+      loadSedes();
+      
+      // Add form submit handler
+      document.getElementById('form-sede').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = {
+          Nombre: document.getElementById('nombre').value,
+          Direccion: document.getElementById('direccion').value,
+          Usuario_id: parseInt(document.getElementById('usuario_id').value)
+        };
+        
+        try {
+          const response = await fetch(`${API_URL}/sedes/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+          
+          if (response.ok) {
+            alert('Sede creada exitosamente');
+            document.getElementById('form-sede').reset();
+            loadSedes();
+          } else {
+            const error = await response.json();
+            alert('Error al crear sede: ' + JSON.stringify(error));
+          }
+        } catch (error) {
+          alert('Error de conexión: ' + error.message);
+        }
+      });
+    });
+
+    function setupUserInterface(userData) {
+      const userWelcome = document.getElementById('userWelcome');
+      userWelcome.textContent = `Administrador ${userData.username}`;
+    }
+
+    async function loadSedes() {
+      try {
+        const response = await fetch(`${API_URL}/sedes/`);
+        const sedes = await response.json();
+        const tbody = document.getElementById('sedesTableBody');
+        
+        tbody.innerHTML = '';
+        sedes.forEach(sede => {
+          const row = tbody.insertRow();
+          row.innerHTML = `
+            <td>${sede.idSedes}</td>
+            <td>${sede.Nombre}</td>
+            <td>${sede.Direccion}</td>
+            <td>${sede.Usuario_id}</td>
+            <td>
+              <button class="action-btn edit-btn" onclick="editSede(${sede.idSedes})">Editar</button>
+              <button class="action-btn delete-btn" onclick="deleteSede(${sede.idSedes})">Eliminar</button>
+            </td>
+          `;
+        });
+      } catch (error) {
+        console.error('Error loading sedes:', error);
+      }
+    }
+
+    function editSede(id) {
+      alert('Función de editar en desarrollo');
+    }
+
+    async function deleteSede(id) {
+      if (confirm('¿Está seguro de que desea eliminar esta sede?')) {
+        try {
+          const response = await fetch(`${API_URL}/sedes/${id}`, {
+            method: 'DELETE'
+          });
+          
+          if (response.ok) {
+            alert('Sede eliminada exitosamente');
+            loadSedes();
+          } else {
+            alert('Error al eliminar sede');
+          }
+        } catch (error) {
+          alert('Error de conexión: ' + error.message);
+        }
+      }
+    }
+  </script>
+</body>
+</html>

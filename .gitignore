@@ -1,0 +1,87 @@
+# Environment Variables
+.env
+.env.local
+.env.production
+.env.staging
+
+# API Keys and Secrets
+*.key
+*.pem
+config/secrets.json
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+backend/panaderia.db
+backend/*.db
+
+# Python Virtual Environment
+backend/venv/
+backend/env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Node.js (if you add npm packages later)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Log Files
+*.log
+sensor_output.log
+logs/
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+
+# Arduino/ESP32 Build Files (if you add those later)
+*.ino.bin
+*.ino.elf
+*.ino.map
+
+# Backup Files
+*.bak
+*.backup
+*~
+
+# Cache Files
+.cache/
+.pytest_cache/
