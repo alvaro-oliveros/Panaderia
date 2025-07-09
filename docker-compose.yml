@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  bakery-app:
+    build: .
+    ports:
+      - "8000:8000"
+      - "3000:3000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DATABASE_URL=sqlite:///./panaderias.db
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    volumes:
+      # Persist database
+      - bakery_data:/app/backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  bakery_data:
+    driver: local

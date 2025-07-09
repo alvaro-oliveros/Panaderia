@@ -1,4 +1,15 @@
-const API_URL = "http://127.0.0.1:8000";
+// Auto-detect API URL based on environment
+function getApiUrl() {
+    const hostname = window.location.hostname;
+    
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://127.0.0.1:8000';
+    } else {
+        return `http://${hostname}:8000`;
+    }
+}
+
+const API_URL = getApiUrl();
 
 function checkAuth() {
     const userData = sessionStorage.getItem('userData');

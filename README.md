@@ -9,16 +9,49 @@ Un sistema completo de gestión para múltiples panaderías con autenticación b
 - SQLite3
 - Navegador web moderno
 
-### Configuración de Variables de Entorno (Opcional)
+### Configuración de Variables de Entorno
 
-Para funciones AI, configurar la API key de Claude:
+El sistema soporta configuración via variables de entorno para diferentes despliegues:
+
+#### Variables Principales
 ```bash
-# Opción 1: Variable de entorno
-export CLAUDE_API_KEY="your-claude-api-key-here"
+# Configuración del servidor
+HOST=127.0.0.1                                    # Host del servidor backend
+PORT=8000                                         # Puerto del servidor backend
+DATABASE_URL=sqlite:///./panaderias.db           # URL de la base de datos
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000  # Orígenes permitidos para CORS
 
-# Opción 2: Archivo .env
-echo "CLAUDE_API_KEY=your-api-key" > .env
+# Para funciones AI (opcional)
+CLAUDE_API_KEY=your-claude-api-key-here          # API key de Claude
 ```
+
+#### Configuración para Desarrollo Local (por defecto)
+```bash
+# No requiere configuración adicional, usa valores por defecto
+./start.sh
+```
+
+#### Configuración para Despliegue en EC2/Docker
+```bash
+# Crear archivo .env con configuración de producción
+cat > .env << EOF
+HOST=0.0.0.0
+PORT=8000
+DATABASE_URL=sqlite:///./panaderias.db
+CORS_ORIGINS=http://your-ec2-public-ip:3000
+CLAUDE_API_KEY=your-claude-api-key-here
+EOF
+
+# Iniciar con variables de entorno
+./start.sh
+```
+
+#### Configuración Automática del Frontend
+El frontend detecta automáticamente el entorno:
+- **Local**: Usa `http://127.0.0.1:8000` como API URL
+- **EC2/Producción**: Usa `http://{hostname}:8000` como API URL
+
+No se requiere configuración manual del frontend para diferentes entornos.
 
 ### Opción 1: Inicio Automático (Recomendado)
 
@@ -66,6 +99,7 @@ El script automáticamente:
 - **Frontend**: http://localhost:3000/login.html
 - **Backend API**: http://localhost:8000
 - **Documentación API**: http://localhost:8000/docs
+- **Health Check**: http://localhost:8000/health
 - **Dashboard**: http://localhost:3000/index.html (después del login)
 - **Sensores**: http://localhost:3000/sensores.html
 - **Temperatura**: http://localhost:3000/temperatura.html
@@ -105,6 +139,7 @@ backend/
 │   ├── schemas.py      # Esquemas de validación
 │   ├── database.py     # Configuración de BD
 │   ├── main.py         # Aplicación principal
+│   ├── config.py       # Configuración de variables de entorno
 │   └── routes/         # Endpoints de la API
 │       ├── productos.py
 │       ├── sedes.py
@@ -281,6 +316,9 @@ El sistema incluye datos de ejemplo:
 ### Error de Conexión Backend
 ```bash
 # Verificar que el servidor esté ejecutándose
+curl http://127.0.0.1:8000/health
+
+# Verificar endpoint específico
 curl http://127.0.0.1:8000/sedes/
 ```
 
@@ -323,6 +361,61 @@ El proyecto incluye un `.gitignore` comprehensivo que excluye:
 - **Instrucciones de IoT setup** incluidas
 - **Guías de troubleshooting**
 
+## 🚀 Despliegue y Configuración Avanzada
+
+### Configuración para Diferentes Entornos
+
+#### Desarrollo Local
+```bash
+# Usar configuración por defecto
+./start.sh
+```
+
+#### Despliegue en EC2 con Docker
+```bash
+# 1. Crear archivo .env para producción
+cat > .env << EOF
+HOST=0.0.0.0
+PORT=8000
+DATABASE_URL=sqlite:///./panaderias.db
+CORS_ORIGINS=http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):3000
+EOF
+
+# 2. Iniciar aplicación
+./start.sh
+```
+
+#### Variables de Entorno Disponibles
+- **HOST**: Dirección IP del servidor (default: 127.0.0.1)
+- **PORT**: Puerto del servidor backend (default: 8000)  
+- **DATABASE_URL**: URL de conexión a la base de datos
+- **CORS_ORIGINS**: Orígenes permitidos para CORS (separados por comas)
+- **CLAUDE_API_KEY**: API key para funciones AI (opcional)
+
+#### Detección Automática de Entorno
+El frontend detecta automáticamente el entorno de ejecución:
+- **Local**: `http://127.0.0.1:8000`
+- **EC2/Producción**: `http://{hostname}:8000`
+
+#### Health Check
+Endpoint disponible para monitoreo:
+```bash
+curl http://your-server:8000/health
+# Respuesta: {"status": "healthy", "message": "Bakery API is running"}
+```
+
+### Archivos de Configuración
+
+#### `.env.example`
+Template de configuración incluido en el proyecto con valores por defecto y comentarios explicativos.
+
+#### `backend/app/config.py`
+Clase de configuración centralizada que maneja:
+- Configuración del servidor
+- Configuración de base de datos
+- Configuración de CORS
+- Detección automática de rutas absolutas para SQLite
+
 ## 🚀 Próximas Funcionalidades
 
 - [ ] Reportes y análisis de ventas avanzados
@@ -333,6 +426,7 @@ El proyecto incluye un `.gitignore` comprehensivo que excluye:
 - [ ] ✅ ~~Paginación de productos~~ (Implementado)
 - [ ] ✅ ~~AI Analytics~~ (Implementado)
 - [ ] ✅ ~~IoT Sensor Integration~~ (Implementado)
+- [ ] ✅ ~~Configuración de entornos~~ (Implementado)
 
 ## 📞 Contribuir
 

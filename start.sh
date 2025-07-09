@@ -47,8 +47,8 @@ if [ ! -f "venv/pyvenv.cfg" ] || ! pip show fastapi &> /dev/null; then
     pip install fastapi uvicorn sqlalchemy
 fi
 
-# Iniciar backend en segundo plano
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 &
+# Iniciar backend en segundo plano usando configuración
+uvicorn app.main:app --reload --host ${HOST:-127.0.0.1} --port ${PORT:-8000} &
 BACKEND_PID=$!
 
 cd ..
