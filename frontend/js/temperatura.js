@@ -1,3 +1,8 @@
+// Pagination state
+let currentPage = 0;
+let itemsPerPage = 50;
+let currentFilters = {};
+
 document.addEventListener('DOMContentLoaded', function() {
     const userData = checkAuth();
     if (!userData) return;
@@ -61,29 +66,56 @@ async function cargarSensores() {
 async function cargarTemperaturas() {
     try {
         const userData = checkAuth();
-        let url = `${API_URL}/temperatura/`;
+        const params = new URLSearchParams();
         
         if (userData.userType !== 'admin') {
-            url += `?user_id=${userData.userId}`;
+            params.append('user_id', userData.userId);
         }
         
+        // Add pagination parameters
+        params.append('limit', itemsPerPage);
+        params.append('offset', currentPage * itemsPerPage);
+        
+        // Add filters if any
+        Object.keys(currentFilters).forEach(key => {
+            if (currentFilters[key]) {
+                params.append(key, currentFilters[key]);
+            }
+        });
+        
+        const url = `${API_URL}/temperatura/?${params.toString()}`;
         const response = await fetch(url);
-        const temperaturas = await response.json();
+        const data = await response.json();
+        
+        // Handle both old format (array) and new format (object with pagination)
+        const temperaturas = data.temperatures || data;
+        const total = data.total || (temperaturas ? temperaturas.length : 0);
+        const hasMore = data.has_more || false;
+        
+        // Ensure temperaturas is an array
+        if (!Array.isArray(temperaturas)) {
+            console.error('Temperaturas is not an array:', temperaturas);
+            return;
+        }
         
         // Cargar datos de sensores y sedes para mostrar nombres
         const sensoresResponse = await fetch(`${API_URL}/sensores/`);
         const sensores = await sensoresResponse.json();
         const sensoresMap = {};
-        sensores.forEach(sensor => {
-            sensoresMap[sensor.idSensores] = sensor;
-        });
+        if (Array.isArray(sensores)) {
+            sensores.forEach(sensor => {
+                sensoresMap[sensor.idSensores] = sensor;
+            });
+        }
         
         const sedesResponse = await fetch(`${API_URL}/sedes/`);
         const sedes = await sedesResponse.json();
         const sedesMap = {};
-        sedes.forEach(sede => {
-            sedesMap[sede.idSedes] = sede.Nombre;
-        });
+        if (Array.isArray(sedes)) {
+            sedes.forEach(sede => {
+                sedesMap[sede.idSedes] = sede.Nombre;
+            });
+        }
         
         const tbody = document.querySelector('#tablaTemperaturas tbody');
         tbody.innerHTML = '';
@@ -109,6 +141,10 @@ async function cargarTemperaturas() {
             `;
             tbody.innerHTML += row;
         });
+        
+        // Update pagination controls
+        updatePaginationControls(total, hasMore);
+        
     } catch (error) {
         console.error('Error al cargar temperaturas:', error);
         alert('Error al cargar las temperaturas');
@@ -116,34 +152,19 @@ async function cargarTemperaturas() {
 }
 
 async function aplicarFiltros() {
-    try {
-        const userData = checkAuth();
-        const sensorId = document.getElementById('filtroSensor').value;
-        
-        let url = `${API_URL}/temperatura/`;
-        const params = new URLSearchParams();
-        
-        if (userData.userType !== 'admin') {
-            params.append('user_id', userData.userId);
-        }
-        
-        if (sensorId) {
-            params.append('sensor_id', sensorId);
-        }
-        
-        if (params.toString()) {
-            url += '?' + params.toString();
-        }
-        
-        const response = await fetch(url);
-        const temperaturas = await response.json();
-        
-        // Actualizar tabla con datos filtrados
-        mostrarTemperaturas(temperaturas);
-    } catch (error) {
-        console.error('Error al aplicar filtros:', error);
-        alert('Error al aplicar filtros');
+    const sensorId = document.getElementById('filtroSensor').value;
+    
+    // Update current filters
+    currentFilters = {};
+    if (sensorId) {
+        currentFilters.sensor_id = sensorId;
     }
+    
+    // Reset pagination when applying filters
+    resetPagination();
+    
+    // Reload data with new filters
+    cargarTemperaturas();
 }
 
 async function mostrarTemperaturas(temperaturas) {
@@ -290,4 +311,50 @@ async function eliminarTemperatura(id) {
             alert('Error al eliminar temperatura');
         }
     }
+}
+
+function updatePaginationControls(total, hasMore) {
+    const paginationDiv = document.getElementById('paginationControls') || createPaginationControls();
+    
+    const startItem = currentPage * itemsPerPage + 1;
+    const endItem = Math.min((currentPage + 1) * itemsPerPage, total);
+    
+    paginationDiv.innerHTML = `
+        <div class="pagination-info">
+            Mostrando ${startItem} - ${endItem} de ${total} registros
+        </div>
+        <div class="pagination-buttons">
+            <button ${currentPage === 0 ? 'disabled' : ''} onclick="previousPage()">Anterior</button>
+            <span>Página ${currentPage + 1}</span>
+            <button ${!hasMore ? 'disabled' : ''} onclick="nextPage()">Siguiente</button>
+        </div>
+    `;
+}
+
+function createPaginationControls() {
+    const paginationDiv = document.createElement('div');
+    paginationDiv.id = 'paginationControls';
+    paginationDiv.className = 'pagination-controls';
+    
+    const tableContainer = document.querySelector('#tablaTemperaturas').parentNode;
+    tableContainer.appendChild(paginationDiv);
+    
+    return paginationDiv;
+}
+
+function previousPage() {
+    if (currentPage > 0) {
+        currentPage--;
+        cargarTemperaturas();
+    }
+}
+
+function nextPage() {
+    currentPage++;
+    cargarTemperaturas();
+}
+
+// Update the aplicarFiltros function to reset pagination
+function resetPagination() {
+    currentPage = 0;
 }

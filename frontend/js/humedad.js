@@ -1,3 +1,8 @@
+// Pagination state
+let currentPage = 0;
+let itemsPerPage = 50;
+let currentFilters = {};
+
 document.addEventListener('DOMContentLoaded', function() {
     const userData = checkAuth();
     if (!userData) return;
@@ -59,30 +64,53 @@ async function cargarSensores() {
 }
 
 function getHumidityStatus(humidity) {
-    if (humidity < 40) {
-        return { status: 'Muy Baja', class: 'humidity-very-low' };
+    if (humidity < 45) {
+        return { status: 'Crítica Baja', class: 'humidity-very-low' };
     } else if (humidity < 50) {
-        return { status: 'Baja', class: 'humidity-low' };
-    } else if (humidity <= 65) {
+        return { status: 'Precaución Baja', class: 'humidity-low' };
+    } else if (humidity <= 70) {
         return { status: 'Óptima', class: 'humidity-optimal' };
     } else if (humidity <= 75) {
-        return { status: 'Alta', class: 'humidity-high' };
+        return { status: 'Precaución Alta', class: 'humidity-high' };
     } else {
-        return { status: 'Muy Alta', class: 'humidity-very-high' };
+        return { status: 'Crítica Alta', class: 'humidity-very-high' };
     }
 }
 
 async function cargarHumedades() {
     try {
         const userData = checkAuth();
-        let url = `${API_URL}/humedad/`;
+        const params = new URLSearchParams();
         
         if (userData.userType !== 'admin') {
-            url += `?user_id=${userData.userId}`;
+            params.append('user_id', userData.userId);
         }
         
+        // Add pagination parameters
+        params.append('limit', itemsPerPage);
+        params.append('offset', currentPage * itemsPerPage);
+        
+        // Add filters if any
+        Object.keys(currentFilters).forEach(key => {
+            if (currentFilters[key]) {
+                params.append(key, currentFilters[key]);
+            }
+        });
+        
+        const url = `${API_URL}/humedad/?${params.toString()}`;
         const response = await fetch(url);
-        const humedades = await response.json();
+        const data = await response.json();
+        
+        // Handle both old format (array) and new format (object with pagination)
+        const humedades = data.humidities || data;
+        const total = data.total || (humedades ? humedades.length : 0);
+        const hasMore = data.has_more || false;
+        
+        // Ensure humedades is an array
+        if (!Array.isArray(humedades)) {
+            console.error('Humedades is not an array:', humedades);
+            return;
+        }
         
         // Cargar datos de sensores y sedes para mostrar nombres
         const [sensoresResponse, sedesResponse] = await Promise.all([
@@ -93,14 +121,18 @@ async function cargarHumedades() {
         const sedes = await sedesResponse.json();
         
         const sensoresMap = {};
-        sensores.forEach(sensor => {
-            sensoresMap[sensor.idSensores] = sensor;
-        });
+        if (Array.isArray(sensores)) {
+            sensores.forEach(sensor => {
+                sensoresMap[sensor.idSensores] = sensor;
+            });
+        }
         
         const sedesMap = {};
-        sedes.forEach(sede => {
-            sedesMap[sede.idSedes] = sede.Nombre;
-        });
+        if (Array.isArray(sedes)) {
+            sedes.forEach(sede => {
+                sedesMap[sede.idSedes] = sede.Nombre;
+            });
+        }
         
         const tbody = document.querySelector('#tablaHumedades tbody');
         tbody.innerHTML = '';
@@ -128,6 +160,10 @@ async function cargarHumedades() {
             `;
             tbody.innerHTML += row;
         });
+        
+        // Update pagination controls
+        updatePaginationControls(total, hasMore);
+        
     } catch (error) {
         console.error('Error al cargar humedades:', error);
         alert('Error al cargar las humedades');
@@ -135,34 +171,19 @@ async function cargarHumedades() {
 }
 
 async function aplicarFiltros() {
-    try {
-        const userData = checkAuth();
-        const sensorId = document.getElementById('filtroSensor').value;
-        
-        let url = `${API_URL}/humedad/`;
-        const params = new URLSearchParams();
-        
-        if (userData.userType !== 'admin') {
-            params.append('user_id', userData.userId);
-        }
-        
-        if (sensorId) {
-            params.append('sensor_id', sensorId);
-        }
-        
-        if (params.toString()) {
-            url += '?' + params.toString();
-        }
-        
-        const response = await fetch(url);
-        const humedades = await response.json();
-        
-        // Actualizar tabla con datos filtrados
-        mostrarHumedades(humedades);
-    } catch (error) {
-        console.error('Error al aplicar filtros:', error);
-        alert('Error al aplicar filtros');
+    const sensorId = document.getElementById('filtroSensor').value;
+    
+    // Update current filters
+    currentFilters = {};
+    if (sensorId) {
+        currentFilters.sensor_id = sensorId;
     }
+    
+    // Reset pagination when applying filters
+    resetPagination();
+    
+    // Reload data with new filters
+    cargarHumedades();
 }
 
 async function mostrarHumedades(humedades) {
@@ -314,4 +335,49 @@ async function eliminarHumedad(id) {
             alert('Error al eliminar humedad');
         }
     }
+}
+
+function updatePaginationControls(total, hasMore) {
+    const paginationDiv = document.getElementById('paginationControls') || createPaginationControls();
+    
+    const startItem = currentPage * itemsPerPage + 1;
+    const endItem = Math.min((currentPage + 1) * itemsPerPage, total);
+    
+    paginationDiv.innerHTML = `
+        <div class="pagination-info">
+            Mostrando ${startItem} - ${endItem} de ${total} registros
+        </div>
+        <div class="pagination-buttons">
+            <button ${currentPage === 0 ? 'disabled' : ''} onclick="previousPage()">Anterior</button>
+            <span>Página ${currentPage + 1}</span>
+            <button ${!hasMore ? 'disabled' : ''} onclick="nextPage()">Siguiente</button>
+        </div>
+    `;
+}
+
+function createPaginationControls() {
+    const paginationDiv = document.createElement('div');
+    paginationDiv.id = 'paginationControls';
+    paginationDiv.className = 'pagination-controls';
+    
+    const tableContainer = document.querySelector('#tablaHumedades').parentNode;
+    tableContainer.appendChild(paginationDiv);
+    
+    return paginationDiv;
+}
+
+function previousPage() {
+    if (currentPage > 0) {
+        currentPage--;
+        cargarHumedades();
+    }
+}
+
+function nextPage() {
+    currentPage++;
+    cargarHumedades();
+}
+
+function resetPagination() {
+    currentPage = 0;
 }
