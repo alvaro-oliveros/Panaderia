@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import database, models, schemas
+from datetime import datetime
 
 router = APIRouter(prefix="/humedad", tags=["Humedad"])
 
@@ -13,14 +14,33 @@ def get_db():
 
 @router.post("/")
 def crear_lectura_humedad(humedad: schemas.HumedadCreate, db: Session = Depends(get_db)):
-    nueva = models.Humedad(**humedad.dict())
+    # Create humidity record
+    data = humedad.dict()
+    
+    # If ESP32 sends fecha, parse it and use it
+    if data.get('fecha'):
+        try:
+            # Parse ESP32 timestamp (assume it's already in Lima time)
+            fecha_esp32 = datetime.fromisoformat(data['fecha'])
+            data['fecha'] = fecha_esp32
+        except ValueError:
+            # If parsing fails, remove fecha and let model use default
+            data.pop('fecha', None)
+    
+    nueva = models.Humedad(**data)
     db.add(nueva)
     db.commit()
     db.refresh(nueva)
     return nueva
 
 @router.get("/")
-def obtener_humedades(user_id: int = None, sensor_id: int = None, db: Session = Depends(get_db)):
+def obtener_humedades(
+    user_id: int = None, 
+    sensor_id: int = None, 
+    limit: int = 50, 
+    offset: int = 0,
+    db: Session = Depends(get_db)
+):
     query = db.query(models.Humedad)
     
     if sensor_id:
@@ -30,12 +50,29 @@ def obtener_humedades(user_id: int = None, sensor_id: int = None, db: Session = 
         # Filtrar por sensores de sedes del usuario
         user_sedes = db.query(models.UsuarioSede).filter(models.UsuarioSede.usuario_id == user_id).all()
         sede_ids = [us.sede_id for us in user_sedes]
-        sensores_usuario = db.query(models.Sensor).filter(models.Sensor.sede_id.in_(sede_ids)).all()
-        sensor_ids = [s.idSensores for s in sensores_usuario]
-        query = query.filter(models.Humedad.Sensor_id.in_(sensor_ids))
+        
+        if sede_ids:
+            sensores_usuario = db.query(models.Sensor).filter(models.Sensor.sede_id.in_(sede_ids)).all()
+            sensor_ids = [s.idSensores for s in sensores_usuario]
+            query = query.filter(models.Humedad.Sensor_id.in_(sensor_ids))
+        else:
+            # User has no assigned sedes, return empty list
+            return {"humidities": [], "total": 0, "has_more": False}
     
-    humedades = query.order_by(models.Humedad.fecha.desc()).all()
-    return humedades
+    # Count total for pagination info
+    total_count = query.count()
+    
+    # Order by most recent first and apply pagination
+    humedades = query.order_by(models.Humedad.fecha.desc()).offset(offset).limit(limit).all()
+    
+    # Return paginated response
+    return {
+        "humidities": humedades,
+        "total": total_count,
+        "limit": limit,
+        "offset": offset,
+        "has_more": (offset + limit) < total_count
+    }
 
 @router.get("/{humedad_id}")
 def obtener_humedad(humedad_id: int, db: Session = Depends(get_db)):

@@ -5,6 +5,7 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <time.h>
 
 // --- Hardware Configuration ---
 #define DHTPIN 2        // Digital pin connected to the DHT sensor
@@ -25,13 +26,18 @@ const char* ssid = "AlvaroPhone";  // Simplified iPhone hotspot name
 const char* password = "Alvarooo";
 
 // --- API Configuration ---
-const char* apiURL = "http://192.168.18.91:8000";  // Your Mac's IP address
+const char* apiURL = "http://3.145.92.151:8000";  // Your AWS EC2 public IP address
 const int sensorID = 1;  // Replace with your sensor ID from database
 
-// --- Alert Thresholds ---
+// --- Timezone Configuration ---
+const char* ntpServer = "pool.ntp.org";
+const long gmtOffset_sec = -5 * 3600;  // Lima, Peru is UTC-5
+const int daylightOffset_sec = 0;      // Peru doesn't use daylight saving time
+
+// --- Alert Thresholds (Adjusted for Lima's humid climate) ---
 const float TEMP_CRITICAL_HIGH = 28.0;   // °C
 const float TEMP_CRITICAL_LOW = 16.0;    // °C
-const float HUMIDITY_CRITICAL_HIGH = 70.0; // %
+const float HUMIDITY_CRITICAL_HIGH = 75.0; // % (Raised for Lima's humidity)
 const float HUMIDITY_CRITICAL_LOW = 45.0;  // %
 
 // --- Create Objects ---
@@ -44,10 +50,13 @@ unsigned long lastSensorRead = 0;
 unsigned long lastAPICall = 0;
 const unsigned long SENSOR_INTERVAL = 2000;  // Read sensor every 2 seconds
 const unsigned long API_INTERVAL = 15000;    // Send to API every 15 seconds
+const unsigned long SENSOR_WARMUP_TIME = 30000;  // DHT22 warm-up time (30 seconds)
 
 float currentTemp = 0.0;
 float currentHumidity = 0.0;
 bool sensorError = false;
+bool sensorWarmedUp = false;
+unsigned long sensorStartTime = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -61,6 +70,11 @@ void setup() {
   // Connect to WiFi
   connectToWiFi();
   
+  // Initialize time synchronization
+  if (wifiConnected) {
+    initializeTime();
+  }
+  
   Serial.println("System initialized successfully!");
 }
 
@@ -73,8 +87,8 @@ void loop() {
     lastSensorRead = millis();
   }
   
-  // Send data to API
-  if (millis() - lastAPICall >= API_INTERVAL && wifiConnected && !sensorError) {
+  // Send data to API (only after warm-up is complete)
+  if (millis() - lastAPICall >= API_INTERVAL && wifiConnected && !sensorError && sensorWarmedUp) {
     sendDataToAPI();
     lastAPICall = millis();
   }
@@ -120,16 +134,58 @@ void initializeDisplay() {
 
 void initializeSensor() {
   dht.begin();
+  sensorStartTime = millis();  // Record start time for warm-up period
   
-  // Test sensor
-  float testTemp = dht.readTemperature();
-  if (isnan(testTemp)) {
-    Serial.println("DHT22 sensor not responding!");
-    sensorError = true;
-  } else {
-    Serial.println("DHT22 sensor initialized successfully");
-    sensorError = false;
+  Serial.println("DHT22 sensor initialized - warming up for 30 seconds...");
+  Serial.println("Please wait for accurate readings...");
+}
+
+void initializeTime() {
+  Serial.println("Initializing time synchronization...");
+  
+  // Configure time with NTP server for Lima, Peru (UTC-5)
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+  
+  // Wait for time to be synchronized
+  int retries = 0;
+  struct tm timeinfo;
+  while (!getLocalTime(&timeinfo) && retries < 10) {
+    delay(1000);
+    retries++;
+    Serial.print(".");
   }
+  
+  if (retries >= 10) {
+    Serial.println("Failed to obtain time from NTP server");
+    return;
+  }
+  
+  Serial.println();
+  Serial.println("Time synchronized successfully!");
+  Serial.print("Current Lima time: ");
+  Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+  
+  // Print UTC time for comparison
+  time_t now = time(nullptr);
+  struct tm* utc_tm = gmtime(&now);
+  Serial.print("UTC time: ");
+  Serial.println(utc_tm, "%A, %B %d %Y %H:%M:%S");
+}
+
+String getCurrentTimestamp() {
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    Serial.println("Failed to obtain time");
+    return "";
+  }
+  
+  // Debug: Print what time we're getting
+  Serial.print("Local time for timestamp: ");
+  Serial.println(&timeinfo, "%Y-%m-%d %H:%M:%S");
+  
+  char timestamp[25];
+  strftime(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%S", &timeinfo);
+  return String(timestamp);
 }
 
 void connectToWiFi() {
@@ -181,6 +237,19 @@ void connectToWiFi() {
 }
 
 void readSensorData() {
+  // Check if sensor warm-up period is complete
+  if (!sensorWarmedUp) {
+    if (millis() - sensorStartTime >= SENSOR_WARMUP_TIME) {
+      sensorWarmedUp = true;
+      Serial.println("DHT22 warm-up complete - readings are now accurate!");
+    } else {
+      // Still warming up - show countdown
+      unsigned long remaining = (SENSOR_WARMUP_TIME - (millis() - sensorStartTime)) / 1000;
+      Serial.printf("Warming up... %lu seconds remaining\n", remaining);
+      return;  // Don't read sensor yet
+    }
+  }
+  
   currentHumidity = dht.readHumidity();
   currentTemp = dht.readTemperature(false);
   
@@ -199,10 +268,10 @@ void updateDisplay() {
   // Title
   display.setTextSize(1);
   display.setCursor(0, 0);
-  display.print("Panaderia Sensor");
+  display.print("Panaderia");
   
   // WiFi Status
-  display.setCursor(90, 0);
+  display.setCursor(70, 0);
   if (wifiConnected) {
     display.print("WiFi:OK");
   } else {
@@ -215,6 +284,16 @@ void updateDisplay() {
     display.println("SENSOR ERROR!");
     display.setCursor(0, 35);
     display.println("Check connections");
+  } else if (!sensorWarmedUp) {
+    // Show warm-up countdown
+    display.setTextSize(1);
+    display.setCursor(0, 20);
+    display.println("WARMING UP...");
+    display.setCursor(0, 35);
+    unsigned long remaining = (SENSOR_WARMUP_TIME - (millis() - sensorStartTime)) / 1000;
+    display.print("Wait: ");
+    display.print(remaining);
+    display.println("s");
   } else {
     // Temperature (large)
     display.setTextSize(2);
@@ -251,7 +330,7 @@ void updateAlerts() {
   if (tempCritical || humidityCritical) {
     setLEDStatus("critical");
     soundAlert();
-  } else if (currentTemp > 25.0 || currentHumidity > 65.0 || currentHumidity < 50.0) {
+  } else if (currentTemp > 25.0 || (currentHumidity >= 70.0 && currentHumidity <= 75.0) || (currentHumidity >= 45.0 && currentHumidity < 50.0)) {
     setLEDStatus("warning");
   } else {
     setLEDStatus("good");
@@ -321,7 +400,7 @@ String getEnvironmentStatus() {
   
   if (tempCritical || humidityCritical) {
     return "CRITICO";
-  } else if (currentTemp > 25.0 || currentHumidity > 65.0 || currentHumidity < 50.0) {
+  } else if (currentTemp > 25.0 || (currentHumidity >= 70.0 && currentHumidity <= 75.0) || (currentHumidity >= 45.0 && currentHumidity < 50.0)) {
     return "ATENCION";
   } else {
     return "OPTIMO";
@@ -364,13 +443,21 @@ bool sendTemperatureData() {
   http.begin(url);
   http.addHeader("Content-Type", "application/json");
   
-  // Create JSON payload
-  StaticJsonDocument<200> doc;
+  // Create JSON payload with Lima timezone
+  StaticJsonDocument<300> doc;
   doc["Temperatura"] = currentTemp;
   doc["Sensor_id"] = sensorID;
   
+  String timestamp = getCurrentTimestamp();
+  if (timestamp.length() > 0) {
+    doc["fecha"] = timestamp;
+  }
+  
   String jsonString;
   serializeJson(doc, jsonString);
+  
+  Serial.print("Sending temperature data: ");
+  Serial.println(jsonString);
   
   int httpResponseCode = http.POST(jsonString);
   
@@ -393,13 +480,21 @@ bool sendHumidityData() {
   http.begin(url);
   http.addHeader("Content-Type", "application/json");
   
-  // Create JSON payload
-  StaticJsonDocument<200> doc;
+  // Create JSON payload with Lima timezone
+  StaticJsonDocument<300> doc;
   doc["Humedad"] = currentHumidity;
   doc["Sensor_id"] = sensorID;
   
+  String timestamp = getCurrentTimestamp();
+  if (timestamp.length() > 0) {
+    doc["fecha"] = timestamp;
+  }
+  
   String jsonString;
   serializeJson(doc, jsonString);
+  
+  Serial.print("Sending humidity data: ");
+  Serial.println(jsonString);
   
   int httpResponseCode = http.POST(jsonString);
   

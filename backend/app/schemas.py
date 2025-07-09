@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 class SedeCreate(BaseModel):
     Nombre: str
@@ -52,6 +53,7 @@ class SensorUpdate(BaseModel):
 class TemperaturaCreate(BaseModel):
     Temperatura: float
     Sensor_id: int
+    fecha: Optional[str] = None
 
 class TemperaturaUpdate(BaseModel):
     Temperatura: Optional[float] = None
@@ -60,6 +62,7 @@ class TemperaturaUpdate(BaseModel):
 class HumedadCreate(BaseModel):
     Humedad: float
     Sensor_id: int
+    fecha: Optional[str] = None
 
 class HumedadUpdate(BaseModel):
     Humedad: Optional[float] = None
