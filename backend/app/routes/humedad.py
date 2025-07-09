@@ -17,17 +17,21 @@ def crear_lectura_humedad(humedad: schemas.HumedadCreate, db: Session = Depends(
     # Create humidity record
     data = humedad.dict()
     
-    # If ESP32 sends fecha, parse it and use it
+    # Create the model instance
+    nueva = models.Humedad(
+        Humedad=data['Humedad'],
+        Sensor_id=data['Sensor_id']
+    )
+    
+    # If ESP32 sends fecha, parse it and use it (assume it's already in Lima time)
     if data.get('fecha'):
         try:
-            # Parse ESP32 timestamp (assume it's already in Lima time)
             fecha_esp32 = datetime.fromisoformat(data['fecha'])
-            data['fecha'] = fecha_esp32
+            nueva.fecha = fecha_esp32
         except ValueError:
-            # If parsing fails, remove fecha and let model use default
-            data.pop('fecha', None)
+            # If parsing fails, let model use default
+            pass
     
-    nueva = models.Humedad(**data)
     db.add(nueva)
     db.commit()
     db.refresh(nueva)
