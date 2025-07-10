@@ -1,6 +1,13 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Boolean
 from sqlalchemy.sql import func
 from .database import Base
+from datetime import datetime
+import pytz
+
+def get_lima_time():
+    """Get current time in Lima, Peru timezone"""
+    lima_tz = pytz.timezone('America/Lima')
+    return datetime.now(lima_tz)
 
 class Sede(Base):
     __tablename__ = "Sedes"
@@ -29,7 +36,7 @@ class Movimiento(Base):
     Cantidad = Column(Float)
     Precio = Column(Float)
     tipo = Column(Enum("venta", "reabastecimiento", "ajuste", "agregado", "entrada"))
-    fecha = Column(DateTime, default=func.now())
+    fecha = Column(DateTime, default=get_lima_time)
     Usuario_id = Column(Integer, ForeignKey("Usuarios.idUsuarios"))
     sede_id = Column(Integer, ForeignKey("Sedes.idSedes"))
 
@@ -58,11 +65,11 @@ class Temperatura(Base):
     idTemperatura = Column(Integer, primary_key=True, index=True)
     Temperatura = Column(Float)  # DECIMAL(10,2) equivalent
     Sensor_id = Column(Integer, ForeignKey("Sensores.idSensores"))
-    fecha = Column(DateTime, default=func.now())
+    fecha = Column(DateTime, default=get_lima_time)
 
 class Humedad(Base):
     __tablename__ = "Humedad"
     idHumedad = Column(Integer, primary_key=True, index=True)
     Humedad = Column(Float)  # Humidity percentage 0-100
     Sensor_id = Column(Integer, ForeignKey("Sensores.idSensores"))
-    fecha = Column(DateTime, default=func.now())
+    fecha = Column(DateTime, default=get_lima_time)

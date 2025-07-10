@@ -142,8 +142,11 @@ async function loadLowStock() {
 
 async function loadTemperatureStatus() {
     try {
-        const response = await fetch(`${API_URL}/temperatura/`);
-        const temperaturas = await response.json();
+        const response = await fetch(`${API_URL}/temperatura/?limit=20`);
+        const data = await response.json();
+        
+        // Handle both old format (array) and new format (object with pagination)
+        const temperaturas = data.temperatures || data;
         
         if (temperaturas.length > 0) {
             // Get last 10 readings for average
