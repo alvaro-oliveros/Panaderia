@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   bakery-app:
+    user: "1000:1000"
     build: .
     ports:
       - "8000:8000"
@@ -10,7 +11,7 @@ services:
       - HOST=0.0.0.0
       - PORT=8000
       - DATABASE_URL=sqlite:///./panaderia.db
-      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+      - CORS_ORIGINS=https://panaderia-icc.duckdns.org,http://localhost:3000
     volumes:
       # Persist database
       - bakery_data:/app/backend
