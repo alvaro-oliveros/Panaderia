@@ -48,9 +48,9 @@ CLAUDE.md
 start.sh
 start.bat
 test_*.py
-generate_*.py
 add_*.py
 fix_*.py
+# Keep generate_business_data.py (don't ignore it)
 
 # Hardware
 esp32_bakery_sensor/

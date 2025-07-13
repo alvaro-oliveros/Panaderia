@@ -37,6 +37,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --chown=bakery:bakery backend/app ./backend/app
 COPY --chown=bakery:bakery frontend ./frontend
 COPY --chown=bakery:bakery .env.example ./.env
+COPY --chown=bakery:bakery generate_business_data.py ./generate_business_data.py
 
 # Switch to non-root user
 USER bakery
@@ -46,12 +47,12 @@ EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:8000/docs || exit 1
 
 # Create startup script
 RUN echo '#!/bin/bash\n\
 # Start frontend server in background\n\
-cd /app && python -m http.server 3000 --directory frontend &\n\
+cd /app && python -m http.server 3000 --bind 0.0.0.0 --directory frontend &\n\
 # Start backend server\n\
 cd /app && uvicorn backend.app.main:app --host 0.0.0.0 --port 8000' > start.sh && \
 chmod +x start.sh

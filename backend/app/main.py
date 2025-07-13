@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import engine, Base
-from .routes import productos, sedes, movimientos, usuarios, sensores, temperatura, humedad, ai_analytics
+from .routes import productos, sedes, movimientos, usuarios, sensores, temperatura, humedad, ai_analytics, voice_chat
 from .config import Config
 
 app = FastAPI()
@@ -28,6 +28,7 @@ app.include_router(sensores.router)
 app.include_router(temperatura.router)
 app.include_router(humedad.router)
 app.include_router(ai_analytics.router)
+app.include_router(voice_chat.router)
 
 # Health check endpoint
 @app.get("/health")

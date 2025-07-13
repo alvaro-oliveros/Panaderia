@@ -6,6 +6,9 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <time.h>
+#include <EEPROM.h>
+#include <WebServer.h>
+#include <DNSServer.h>
 
 // --- Hardware Configuration ---
 #define DHTPIN 2        // Digital pin connected to the DHT sensor
@@ -20,14 +23,36 @@
 #define LED_GREEN 5      // Green LED - Good conditions
 #define LED_YELLOW 18    // Yellow LED - Warning conditions  
 #define LED_RED 19       // Red LED - Critical conditions
+#define CONFIG_BUTTON 0  // Configuration mode button (BOOT button)
 
-// --- WiFi Configuration ---
-const char* ssid = "AlvaroPhone";  // Simplified iPhone hotspot name
-const char* password = "Alvarooo";
+// --- Configuration Structure ---
+struct Config {
+  char ssid[64];
+  char password[64];
+  char apiURL[128];
+  int sensorID;
+  bool configured;
+  char checksum[16]; // Simple validation
+};
 
-// --- API Configuration ---
-const char* apiURL = "http://3.145.92.151:8000";  // Your AWS EC2 public IP address
-const int sensorID = 1;  // Replace with your sensor ID from database
+// --- Default Configuration (fallback) ---
+const char* DEFAULT_SSID = "AlvaroPhone";
+const char* DEFAULT_PASSWORD = "Alvarooo";
+const char* DEFAULT_API_URL = "http://3.12.34.248:8000";
+const int DEFAULT_SENSOR_ID = 1;
+
+// --- Configuration Variables ---
+Config deviceConfig;
+bool configMode = false;
+
+// --- Configuration Portal ---
+WebServer configServer(80);
+DNSServer dnsServer;
+const char* AP_NAME = "BakerySensor-Config";
+
+// EEPROM Configuration
+#define EEPROM_SIZE 512
+#define CONFIG_START_ADDRESS 0
 
 // --- Timezone Configuration ---
 const char* ntpServer = "pool.ntp.org";
@@ -48,6 +73,154 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 bool wifiConnected = false;
 unsigned long lastSensorRead = 0;
 unsigned long lastAPICall = 0;
+
+// === Configuration Functions ===
+
+void saveConfigToEEPROM() {
+  EEPROM.begin(EEPROM_SIZE);
+  strcpy(deviceConfig.checksum, "BAKERY_V1");
+  deviceConfig.configured = true;
+  
+  EEPROM.put(CONFIG_START_ADDRESS, deviceConfig);
+  EEPROM.commit();
+  EEPROM.end();
+  
+  Serial.println("Configuration saved to EEPROM");
+}
+
+bool loadConfigFromEEPROM() {
+  EEPROM.begin(EEPROM_SIZE);
+  EEPROM.get(CONFIG_START_ADDRESS, deviceConfig);
+  EEPROM.end();
+  
+  // Validate checksum
+  if (strcmp(deviceConfig.checksum, "BAKERY_V1") == 0 && deviceConfig.configured) {
+    Serial.println("Valid configuration loaded from EEPROM");
+    return true;
+  } else {
+    Serial.println("No valid configuration found, using defaults");
+    setDefaultConfig();
+    return false;
+  }
+}
+
+void setDefaultConfig() {
+  strcpy(deviceConfig.ssid, DEFAULT_SSID);
+  strcpy(deviceConfig.password, DEFAULT_PASSWORD);
+  strcpy(deviceConfig.apiURL, DEFAULT_API_URL);
+  deviceConfig.sensorID = DEFAULT_SENSOR_ID;
+  deviceConfig.configured = false;
+  strcpy(deviceConfig.checksum, "BAKERY_V1");
+}
+
+bool isConfigButtonPressed() {
+  return digitalRead(CONFIG_BUTTON) == LOW;
+}
+
+// === Configuration Web Server ===
+
+void setupConfigServer() {
+  // Set up Access Point
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(AP_NAME);
+  
+  // Set up DNS server to redirect all requests to configuration page
+  dnsServer.start(53, "*", WiFi.softAPIP());
+  
+  // Configuration page
+  configServer.on("/", handleConfigPage);
+  configServer.on("/save", handleConfigSave);
+  configServer.on("/status", handleConfigStatus);
+  configServer.onNotFound(handleConfigPage); // Redirect all requests to config page
+  
+  configServer.begin();
+  
+  Serial.println("Configuration server started");
+  Serial.print("Connect to WiFi: ");
+  Serial.println(AP_NAME);
+  Serial.print("Open browser to: http://");
+  Serial.println(WiFi.softAPIP());
+}
+
+void handleConfigPage() {
+  String html = "<!DOCTYPE html><html><head>";
+  html += "<title>Bakery Sensor Configuration</title>";
+  html += "<meta name='viewport' content='width=device-width,initial-scale=1'>";
+  html += "<style>body{font-family:Arial;margin:20px;background:#f0f0f0}";
+  html += ".container{background:white;padding:20px;border-radius:10px;max-width:400px;margin:0 auto}";
+  html += "h1{color:#333;text-align:center}input{width:100%;padding:10px;margin:10px 0;border:1px solid #ddd;border-radius:5px}";
+  html += "button{width:100%;padding:15px;background:#007bff;color:white;border:none;border-radius:5px;font-size:16px;cursor:pointer}";
+  html += "button:hover{background:#0056b3}.info{background:#e7f3ff;padding:10px;border-radius:5px;margin:10px 0}</style>";
+  html += "</head><body><div class='container'>";
+  html += "<h1>🍞 Bakery Sensor Config</h1>";
+  
+  html += "<div class='info'>Current Settings:<br>";
+  html += "WiFi: " + String(deviceConfig.ssid) + "<br>";
+  html += "API: " + String(deviceConfig.apiURL) + "<br>";
+  html += "Sensor ID: " + String(deviceConfig.sensorID) + "</div>";
+  
+  html += "<form action='/save' method='POST'>";
+  html += "<label>WiFi Network:</label>";
+  html += "<input type='text' name='ssid' value='" + String(deviceConfig.ssid) + "' required>";
+  html += "<label>WiFi Password:</label>";
+  html += "<input type='password' name='password' value='" + String(deviceConfig.password) + "' required>";
+  html += "<label>API URL:</label>";
+  html += "<input type='text' name='apiURL' value='" + String(deviceConfig.apiURL) + "' required>";
+  html += "<label>Sensor ID:</label>";
+  html += "<input type='number' name='sensorID' value='" + String(deviceConfig.sensorID) + "' required>";
+  html += "<button type='submit'>Save Configuration</button>";
+  html += "</form>";
+  html += "<p style='text-align:center;color:#666;font-size:12px'>After saving, the sensor will restart and connect to your WiFi.</p>";
+  html += "</div></body></html>";
+  
+  configServer.send(200, "text/html", html);
+}
+
+void handleConfigSave() {
+  // Get form data
+  if (configServer.hasArg("ssid") && configServer.hasArg("password") && 
+      configServer.hasArg("apiURL") && configServer.hasArg("sensorID")) {
+    
+    strcpy(deviceConfig.ssid, configServer.arg("ssid").c_str());
+    strcpy(deviceConfig.password, configServer.arg("password").c_str());
+    strcpy(deviceConfig.apiURL, configServer.arg("apiURL").c_str());
+    deviceConfig.sensorID = configServer.arg("sensorID").toInt();
+    
+    // Save to EEPROM
+    saveConfigToEEPROM();
+    
+    String html = "<!DOCTYPE html><html><head>";
+    html += "<title>Configuration Saved</title>";
+    html += "<meta name='viewport' content='width=device-width,initial-scale=1'>";
+    html += "<style>body{font-family:Arial;margin:20px;background:#f0f0f0;text-align:center}";
+    html += ".container{background:white;padding:20px;border-radius:10px;max-width:400px;margin:0 auto}";
+    html += "h1{color:#28a745}</style>";
+    html += "</head><body><div class='container'>";
+    html += "<h1>✅ Configuration Saved!</h1>";
+    html += "<p>The sensor will restart in 5 seconds and connect to your WiFi network.</p>";
+    html += "<p><strong>WiFi:</strong> " + String(deviceConfig.ssid) + "</p>";
+    html += "<p><strong>API:</strong> " + String(deviceConfig.apiURL) + "</p>";
+    html += "</div></body></html>";
+    
+    configServer.send(200, "text/html", html);
+    
+    Serial.println("Configuration saved, restarting in 5 seconds...");
+    delay(5000);
+    ESP.restart();
+  } else {
+    configServer.send(400, "text/plain", "Missing required parameters");
+  }
+}
+
+void handleConfigStatus() {
+  String json = "{";
+  json += "\"ssid\":\"" + String(deviceConfig.ssid) + "\",";
+  json += "\"apiURL\":\"" + String(deviceConfig.apiURL) + "\",";
+  json += "\"sensorID\":" + String(deviceConfig.sensorID) + ",";
+  json += "\"configured\":" + String(deviceConfig.configured ? "true" : "false");
+  json += "}";
+  configServer.send(200, "application/json", json);
+}
 const unsigned long SENSOR_INTERVAL = 2000;  // Read sensor every 2 seconds
 const unsigned long API_INTERVAL = 15000;    // Send to API every 15 seconds
 const unsigned long SENSOR_WARMUP_TIME = 30000;  // DHT22 warm-up time (30 seconds)
@@ -67,15 +240,45 @@ void setup() {
   initializeDisplay();
   initializeSensor();
   
-  // Connect to WiFi
-  connectToWiFi();
+  // Load configuration from EEPROM
+  loadConfigFromEEPROM();
   
-  // Initialize time synchronization
-  if (wifiConnected) {
-    initializeTime();
+  // Check if configuration button is pressed during startup
+  if (isConfigButtonPressed()) {
+    Serial.println("Configuration button pressed - entering configuration mode");
+    configMode = true;
+    
+    // Display configuration mode on OLED
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setCursor(0, 0);
+    display.println("CONFIG MODE");
+    display.println("Connect to WiFi:");
+    display.println(AP_NAME);
+    display.println("Open browser to:");
+    display.println("192.168.4.1");
+    display.display();
+    
+    // Start configuration server
+    setupConfigServer();
+    
+    // Stay in configuration mode
+    while (configMode) {
+      dnsServer.processNextRequest();
+      configServer.handleClient();
+      delay(10);
+    }
+  } else {
+    // Normal operation mode
+    connectToWiFi();
+    
+    // Initialize time synchronization
+    if (wifiConnected) {
+      initializeTime();
+    }
+    
+    Serial.println("System initialized successfully!");
   }
-  
-  Serial.println("System initialized successfully!");
 }
 
 void loop() {
@@ -111,6 +314,9 @@ void initializePins() {
   
   // Initialize buzzer
   pinMode(BUZZER_PIN, OUTPUT);
+  
+  // Initialize configuration button with pullup
+  pinMode(CONFIG_BUTTON, INPUT_PULLUP);
   
   // Test all outputs
   testOutputs();
@@ -192,14 +398,14 @@ void connectToWiFi() {
   setLEDStatus("connecting");
   
   Serial.print("Connecting to WiFi network: ");
-  Serial.println(ssid);
+  Serial.println(deviceConfig.ssid);
   
   // Try to improve compatibility
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
   delay(100);
   
-  WiFi.begin(ssid, password);
+  WiFi.begin(deviceConfig.ssid, deviceConfig.password);
   Serial.print("Connecting to WiFi");
   
   int attempts = 0;
@@ -438,7 +644,7 @@ void sendDataToAPI() {
 
 bool sendTemperatureData() {
   HTTPClient http;
-  String url = String(apiURL) + "/temperatura/";
+  String url = String(deviceConfig.apiURL) + "/temperatura/";
   
   http.begin(url);
   http.addHeader("Content-Type", "application/json");
@@ -446,7 +652,7 @@ bool sendTemperatureData() {
   // Create JSON payload with Lima timezone
   StaticJsonDocument<300> doc;
   doc["Temperatura"] = currentTemp;
-  doc["Sensor_id"] = sensorID;
+  doc["Sensor_id"] = deviceConfig.sensorID;
   
   String timestamp = getCurrentTimestamp();
   if (timestamp.length() > 0) {
@@ -475,7 +681,7 @@ bool sendTemperatureData() {
 
 bool sendHumidityData() {
   HTTPClient http;
-  String url = String(apiURL) + "/humedad/";
+  String url = String(deviceConfig.apiURL) + "/humedad/";
   
   http.begin(url);
   http.addHeader("Content-Type", "application/json");
@@ -483,7 +689,7 @@ bool sendHumidityData() {
   // Create JSON payload with Lima timezone
   StaticJsonDocument<300> doc;
   doc["Humedad"] = currentHumidity;
-  doc["Sensor_id"] = sensorID;
+  doc["Sensor_id"] = deviceConfig.sensorID;
   
   String timestamp = getCurrentTimestamp();
   if (timestamp.length() > 0) {
