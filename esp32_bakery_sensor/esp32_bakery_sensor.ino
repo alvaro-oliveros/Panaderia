@@ -4,6 +4,7 @@
 #include <Adafruit_SSD1306.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
 #include <time.h>
 #include <EEPROM.h>
@@ -38,7 +39,7 @@ struct Config {
 // --- Default Configuration (fallback) ---
 const char* DEFAULT_SSID = "AlvaroPhone";
 const char* DEFAULT_PASSWORD = "Alvarooo";
-const char* DEFAULT_API_URL = "http://3.12.34.248:8000";
+const char* DEFAULT_API_URL = "https://panaderia-icc.duckdns.org/api";
 const int DEFAULT_SENSOR_ID = 1;
 
 // --- Configuration Variables ---
@@ -166,6 +167,7 @@ void handleConfigPage() {
   html += "<input type='password' name='password' value='" + String(deviceConfig.password) + "' required>";
   html += "<label>API URL:</label>";
   html += "<input type='text' name='apiURL' value='" + String(deviceConfig.apiURL) + "' required>";
+  html += "<small style='color:#666;font-size:11px'>✅ Default HTTPS URL: https://panaderia-icc.duckdns.org/api</small><br>";
   html += "<label>Sensor ID:</label>";
   html += "<input type='number' name='sensorID' value='" + String(deviceConfig.sensorID) + "' required>";
   html += "<button type='submit'>Save Configuration</button>";
@@ -299,7 +301,7 @@ void loop() {
   // Check WiFi connection
   if (!WiFi.isConnected() && wifiConnected) {
     wifiConnected = false;
-    Serial.println("WiFi connection lost. Attempting to reconnect...");
+    Serial.println("WiFi connection lost. Attempting to reconnect...");/Users/alvaro/Desktop/Panaderia
     connectToWiFi();
   }
   
@@ -314,7 +316,6 @@ void initializePins() {
   
   // Initialize buzzer
   pinMode(BUZZER_PIN, OUTPUT);
-  
   // Initialize configuration button with pullup
   pinMode(CONFIG_BUTTON, INPUT_PULLUP);
   
@@ -644,9 +645,12 @@ void sendDataToAPI() {
 
 bool sendTemperatureData() {
   HTTPClient http;
+  WiFiClientSecure client;
   String url = String(deviceConfig.apiURL) + "/temperatura/";
   
-  http.begin(url);
+  // Configure for HTTPS
+  client.setInsecure(); // Skip certificate validation for simplicity
+  http.begin(client, url);
   http.addHeader("Content-Type", "application/json");
   
   // Create JSON payload with Lima timezone
@@ -681,9 +685,12 @@ bool sendTemperatureData() {
 
 bool sendHumidityData() {
   HTTPClient http;
+  WiFiClientSecure client;
   String url = String(deviceConfig.apiURL) + "/humedad/";
   
-  http.begin(url);
+  // Configure for HTTPS
+  client.setInsecure(); // Skip certificate validation for simplicity
+  http.begin(client, url);
   http.addHeader("Content-Type", "application/json");
   
   // Create JSON payload with Lima timezone
