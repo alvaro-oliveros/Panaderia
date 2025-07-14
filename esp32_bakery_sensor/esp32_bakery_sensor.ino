@@ -301,7 +301,7 @@ void loop() {
   // Check WiFi connection
   if (!WiFi.isConnected() && wifiConnected) {
     wifiConnected = false;
-    Serial.println("WiFi connection lost. Attempting to reconnect...");/Users/alvaro/Desktop/Panaderia
+    Serial.println("WiFi connection lost. Attempting to reconnect...");
     connectToWiFi();
   }
   
