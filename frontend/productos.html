@@ -128,7 +128,7 @@
     function setupUserInterface(userData) {
       const userWelcome = document.getElementById('userWelcome');
       if (userData.userType === 'admin') {
-        userWelcome.textContent = `Administrador ${userData.username}`;
+        userWelcome.textContent = `Bienvenido, ${userData.username}`;
       } else {
         userWelcome.textContent = `${userData.bakeryName} (${userData.username})`;
       }

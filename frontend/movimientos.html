@@ -133,9 +133,9 @@
             const usuarioIdInput = document.getElementById('usuario_id');
             
             if (userData.rol === 'admin') {
-                userWelcome.textContent = `Administrador ${userData.username}`;
+                userWelcome.textContent = `Bienvenido, ${userData.username}`;
             } else {
-                userWelcome.textContent = `${userData.username}`;
+                userWelcome.textContent = `Bienvenido, ${userData.username}`;
                 // For regular users, auto-fill and hide user ID field
                 usuarioIdInput.value = userData.userId;
                 usuarioIdInput.readOnly = true;

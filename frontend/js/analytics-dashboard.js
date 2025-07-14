@@ -21,10 +21,10 @@ function setupUserInterface(userData) {
     const sedesLink = document.getElementById('sedesLink');
     
     if (userData.rol === 'admin') {
-        userWelcome.textContent = `${userData.username}`;
+        userWelcome.textContent = `Bienvenido, ${userData.username}`;
         // Admin can see all navigation links
     } else {
-        userWelcome.textContent = `${userData.username}`;
+        userWelcome.textContent = `Bienvenido, ${userData.username}`;
         // Hide admin-only features
         if (usuariosLink) usuariosLink.style.display = 'none';
     }
