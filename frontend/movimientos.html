@@ -51,6 +51,11 @@
                     </div>
                     
                     <div class="form-group">
+                        <label for="fecha">Fecha:</label>
+                        <input type="datetime-local" id="fecha" required>
+                    </div>
+                    
+                    <div class="form-group">
                         <label for="sede_id">Sede:</label>
                         <select id="sede_id" required>
                             <option value="">Seleccionar sede...</option>
@@ -112,7 +117,15 @@
             loadProductos();
             loadSedes(userData);
             loadMovimientos();
+            setDefaultDate();
         });
+
+        function setDefaultDate() {
+            // Set current date and time as default
+            const now = new Date();
+            const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            document.getElementById('fecha').value = localDateTime;
+        }
 
         function setupUserInterface(userData) {
             const userWelcome = document.getElementById('userWelcome');
@@ -202,6 +215,7 @@
                 Cantidad: parseInt(document.getElementById("cantidad").value),
                 Precio: parseFloat(document.getElementById("precio").value),
                 tipo: document.getElementById("tipo").value,
+                fecha: document.getElementById("fecha").value,
                 sede_id: parseInt(document.getElementById("sede_id").value),
                 Usuario_id: parseInt(document.getElementById("usuario_id").value)
             };
@@ -289,7 +303,7 @@
                         <td>${fecha}</td>
                         <td>${movimiento.Usuario_id}</td>
                         <td>
-                            <button class="action-btn edit-btn" onclick="editMovimiento(${movimiento.idMovimientos}, ${movimiento.producto_id}, ${movimiento.Cantidad}, ${movimiento.Precio}, '${movimiento.tipo}', ${movimiento.sede_id}, ${movimiento.Usuario_id})">Editar</button>
+                            <button class="action-btn edit-btn" onclick="editMovimiento(${movimiento.idMovimientos}, ${movimiento.producto_id}, ${movimiento.Cantidad}, ${movimiento.Precio}, '${movimiento.tipo}', '${movimiento.fecha}', ${movimiento.sede_id}, ${movimiento.Usuario_id})">Editar</button>
                             <button class="action-btn delete-btn" onclick="deleteMovimiento(${movimiento.idMovimientos})">Eliminar</button>
                         </td>
                     `;
@@ -300,7 +314,7 @@
             }
         }
 
-        async function editMovimiento(id, productoId, cantidad, precio, tipo, sedeId, usuarioId) {
+        async function editMovimiento(id, productoId, cantidad, precio, tipo, fecha, sedeId, usuarioId) {
             try {
                 // Load current productos and sedes for dropdowns
                 const [productosResponse, sedesResponse] = await Promise.all([
@@ -322,6 +336,9 @@
                 const sedesOptions = sedes.map(s => 
                     `<option value="${s.idSedes}" ${s.idSedes === sedeId ? 'selected' : ''}>${s.Nombre}</option>`
                 ).join('');
+                
+                // Format fecha for datetime-local input
+                const fechaFormatted = new Date(fecha).toISOString().slice(0, 16);
                 
                 // Create edit modal
                 const modal = document.createElement('div');
@@ -356,6 +373,10 @@
                                     <option value="ajuste" ${tipo === 'ajuste' ? 'selected' : ''}>Ajuste</option>
                                     <option value="agregado" ${tipo === 'agregado' ? 'selected' : ''}>Agregado</option>
                                 </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="editFecha">Fecha:</label>
+                                <input type="datetime-local" id="editFecha" value="${fechaFormatted}" required />
                             </div>
                             <div class="form-group">
                                 <label for="editSedeId">Sede:</label>
@@ -396,6 +417,7 @@
                 Cantidad: parseInt(document.getElementById("editCantidad").value),
                 Precio: parseFloat(document.getElementById("editPrecio").value),
                 tipo: document.getElementById("editTipo").value,
+                fecha: document.getElementById("editFecha").value,
                 sede_id: parseInt(document.getElementById("editSedeId").value),
                 Usuario_id: parseInt(document.getElementById("editUsuarioId").value)
             };
