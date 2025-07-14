@@ -1,24 +1,6 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: panaderia
-      POSTGRES_USER: bakery_admin
-      POSTGRES_PASSWORD: bakery_secure_2024
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U bakery_admin -d panaderia"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    ports:
-      - "5433:5432"  # Expose for local development/debugging (avoid conflicts)
-
   bakery-app:
     user: "1000:1000"
     build: .
@@ -28,17 +10,14 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=8000
-      - DATABASE_URL=postgresql://bakery_admin:bakery_secure_2024@postgres:5432/panaderia
+      - DATABASE_URL=sqlite:///./panaderia.db
       - CORS_ORIGINS=https://panaderia-icc.duckdns.org,http://localhost:3000
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - CLAUDE_API_KEY=${CLAUDE_API_KEY}
     volumes:
-      # Persist application data (logs, uploads, etc.)
+      # Persist database
       - bakery_data:/app/backend
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
       interval: 30s
@@ -48,6 +27,4 @@ services:
 
 volumes:
   bakery_data:
-    driver: local
-  postgres_data:
     driver: local
