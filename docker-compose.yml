@@ -12,6 +12,8 @@ services:
       - PORT=8000
       - DATABASE_URL=sqlite:///./panaderia.db
       - CORS_ORIGINS=https://panaderia-icc.duckdns.org,http://localhost:3000
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
     volumes:
       # Persist database
       - bakery_data:/app/backend
