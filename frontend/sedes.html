@@ -126,7 +126,7 @@
             <td>${sede.Direccion}</td>
             <td>${sede.Usuario_id}</td>
             <td>
-              <button class="action-btn edit-btn" onclick="editSede(${sede.idSedes})">Editar</button>
+              <button class="action-btn edit-btn" onclick="editSede(${sede.idSedes}, '${sede.Nombre}', '${sede.Direccion}', ${sede.Usuario_id})">Editar</button>
               <button class="action-btn delete-btn" onclick="deleteSede(${sede.idSedes})">Eliminar</button>
             </td>
           `;
@@ -136,8 +136,84 @@
       }
     }
 
-    function editSede(id) {
-      alert('Función de editar en desarrollo');
+    function editSede(id, nombre, direccion, usuarioId) {
+      try {
+        // Create edit modal with the passed data
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Editar Sede</h3>
+              <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <form id="editSedeForm">
+              <div class="form-group">
+                <label for="editNombre">Nombre de la Sede:</label>
+                <input type="text" id="editNombre" value="${nombre}" required />
+              </div>
+              <div class="form-group">
+                <label for="editDireccion">Dirección:</label>
+                <input type="text" id="editDireccion" value="${direccion}" required />
+              </div>
+              <div class="form-group">
+                <label for="editUsuarioId">Usuario ID:</label>
+                <input type="number" id="editUsuarioId" value="${usuarioId}" required />
+              </div>
+              <div class="form-buttons">
+                <button type="submit">Guardar Cambios</button>
+                <button type="button" onclick="closeEditModal()">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+        modal.style.display = 'block';
+        
+        // Handle form submission
+        document.getElementById('editSedeForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          await updateSede(id);
+        });
+        
+      } catch (error) {
+        alert('Error al cargar sede: ' + error.message);
+      }
+    }
+
+    async function updateSede(id) {
+      const formData = {
+        Nombre: document.getElementById("editNombre").value,
+        Direccion: document.getElementById("editDireccion").value,
+        Usuario_id: parseInt(document.getElementById("editUsuarioId").value)
+      };
+
+      try {
+        const response = await fetch(`${API_URL}/sedes/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+          alert("Sede actualizada exitosamente");
+          closeEditModal();
+          loadSedes();
+        } else {
+          const error = await response.json();
+          alert("Error al actualizar sede: " + JSON.stringify(error));
+        }
+      } catch (error) {
+        alert("Error de conexión: " + error.message);
+      }
+    }
+
+    function closeEditModal() {
+      const modal = document.querySelector('.modal');
+      if (modal) {
+        modal.remove();
+      }
     }
 
     async function deleteSede(id) {
