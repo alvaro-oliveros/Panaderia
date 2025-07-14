@@ -232,6 +232,7 @@
                 if (response.ok) {
                     alert("Movimiento creado correctamente");
                     document.getElementById("formMovimiento").reset();
+                    setDefaultDate(); // Reset fecha field to current date/time
                     loadMovimientos(currentPage);
                 } else {
                     const error = await response.json();
