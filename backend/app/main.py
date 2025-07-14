@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import engine, Base
+from . import models  # Import models to ensure they are registered with Base
 from .routes import productos, sedes, movimientos, usuarios, sensores, temperatura, humedad, ai_analytics, voice_chat
 from .config import Config
 

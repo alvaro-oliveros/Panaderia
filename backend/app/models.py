@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Boolean
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean, Enum
 from sqlalchemy.sql import func
 from .database import Base
 from datetime import datetime
@@ -35,7 +35,7 @@ class Movimiento(Base):
     producto_id = Column(Integer, ForeignKey("Productos.idProductos"))
     Cantidad = Column(Float)
     Precio = Column(Float)
-    tipo = Column(Enum("venta", "reabastecimiento", "ajuste", "agregado", "entrada"))
+    tipo = Column(Enum("venta", "reabastecimiento", "ajuste", "agregado", "entrada", name="tipo_movimiento"))
     fecha = Column(DateTime, default=get_lima_time)
     Usuario_id = Column(Integer, ForeignKey("Usuarios.idUsuarios"))
     sede_id = Column(Integer, ForeignKey("Sedes.idSedes"))
@@ -45,7 +45,7 @@ class Usuario(Base):
     idUsuarios = Column(Integer, primary_key=True, index=True)
     username = Column(String(45))
     password = Column(String(45))
-    rol = Column(Enum("admin", "usuario"))
+    rol = Column(Enum("admin", "usuario", name="rol_usuario"))
 
 class UsuarioSede(Base):
     __tablename__ = "UsuarioSedes"
