@@ -94,6 +94,43 @@ body {
   opacity: 0.9;
 }
 
+/* Top Products styling */
+.top-product-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.top-product-item:last-child {
+  border-bottom: none;
+}
+
+.top-product-item .rank {
+  font-weight: bold;
+  margin-right: 8px;
+  color: #8B4513;
+}
+
+.top-product-item .product-name {
+  flex-grow: 1;
+  font-weight: 500;
+}
+
+.top-product-item .sede-name {
+  font-size: 12px;
+  color: #666;
+  margin-left: 8px;
+  font-style: italic;
+}
+
+.top-product-item .quantity {
+  font-size: 12px;
+  color: #28a745;
+  font-weight: bold;
+  margin-left: 8px;
+}
+
 /* Pagination Styles */
 .pagination-info {
   margin: 10px 0;

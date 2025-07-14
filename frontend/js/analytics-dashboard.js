@@ -179,13 +179,15 @@ async function loadTemperatureStatus() {
 
 async function loadTopProducts() {
     try {
-        const [movimientosResponse, productosResponse] = await Promise.all([
+        const [movimientosResponse, productosResponse, sedesResponse] = await Promise.all([
             fetch(`${API_URL}/movimientos/?limit=1000`),
-            fetch(`${API_URL}/productos/?limit=1000`)
+            fetch(`${API_URL}/productos/?limit=1000`),
+            fetch(`${API_URL}/sedes/`)
         ]);
         
         const movimientosData = await movimientosResponse.json();
         const productosData = await productosResponse.json();
+        const sedes = await sedesResponse.json();
         
         // Handle both old and new API formats
         const movimientos = { movements: movimientosData.movements || movimientosData };
@@ -200,35 +202,52 @@ async function loadTopProducts() {
             return movDate === today && mov.tipo === 'venta';
         });
         
-        // Count sales by product
+        // Count sales by product AND sede combination
         const productSales = {};
         todaySales.forEach(mov => {
-            if (!productSales[mov.producto_id]) {
-                productSales[mov.producto_id] = 0;
+            const key = `${mov.producto_id}-${mov.sede_id}`;
+            if (!productSales[key]) {
+                productSales[key] = {
+                    producto_id: mov.producto_id,
+                    sede_id: mov.sede_id,
+                    cantidad: 0
+                };
             }
-            productSales[mov.producto_id] += mov.Cantidad;
+            productSales[key].cantidad += mov.Cantidad;
         });
         
         // Get top 5 products
-        const sortedProducts = Object.entries(productSales)
-            .sort(([,a], [,b]) => b - a)
+        const sortedProducts = Object.values(productSales)
+            .sort((a, b) => b.cantidad - a.cantidad)
             .slice(0, 5);
         
-        // Create products map for names
+        // Create products and sedes maps
         const productosMap = {};
         productos.forEach(p => {
-            productosMap[p.idProductos] = p.Nombre;
+            productosMap[p.idProductos] = { nombre: p.Nombre, sede_id: p.Sede_id };
+        });
+        
+        const sedesMap = {};
+        sedes.forEach(s => {
+            sedesMap[s.idSedes] = s.Nombre;
         });
         
         const container = document.getElementById('topProductsToday');
         if (sortedProducts.length > 0) {
-            container.innerHTML = sortedProducts.map(([productId, quantity], index) => `
-                <div class="top-product-item">
-                    <span class="rank">${index + 1}.</span>
-                    <span class="product-name">${productosMap[productId] || `Producto ${productId}`}</span>
-                    <span class="quantity">${Math.round(quantity)} vendidos</span>
-                </div>
-            `).join('');
+            container.innerHTML = sortedProducts.map((product, index) => {
+                const productInfo = productosMap[product.producto_id];
+                const productName = productInfo ? productInfo.nombre : `Producto ${product.producto_id}`;
+                const sedeName = sedesMap[product.sede_id] || `Sede ${product.sede_id}`;
+                
+                return `
+                    <div class="top-product-item">
+                        <span class="rank">${index + 1}.</span>
+                        <span class="product-name">${productName}</span>
+                        <span class="sede-name">(${sedeName})</span>
+                        <span class="quantity">${Math.round(product.cantidad)} vendidos</span>
+                    </div>
+                `;
+            }).join('');
         } else {
             container.innerHTML = '<div class="no-data">Sin ventas registradas hoy</div>';
         }
