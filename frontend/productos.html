@@ -286,38 +286,38 @@
             <form id="editProductForm">
               <div class="form-group">
                 <label for="editNombre">Nombre:</label>
-                <input type="text" id="editNombre" value="${producto.Nombre}" required />
+                <input type="text" id="editNombre" value="${producto.Nombre || ''}" required />
               </div>
               <div class="form-group">
                 <label for="editDescripcion">Descripción:</label>
-                <input type="text" id="editDescripcion" value="${producto.Descripcion}" required />
+                <input type="text" id="editDescripcion" value="${producto.Descripcion || ''}" required />
               </div>
               <div class="form-group">
                 <label for="editPrecio">Precio:</label>
-                <input type="number" step="0.01" id="editPrecio" value="${producto.Precio}" required />
+                <input type="number" step="0.01" id="editPrecio" value="${producto.Precio || 0}" required />
               </div>
               <div class="form-group">
                 <label for="editStock">Stock:</label>
-                <input type="number" step="1" min="0" id="editStock" value="${producto.Stock}" required />
+                <input type="number" step="1" min="0" id="editStock" value="${producto.Stock || 0}" required />
               </div>
               <div class="form-group">
                 <label for="editUnidad">Unidad:</label>
                 <select id="editUnidad" required>
-                  <option value="unidad" ${producto.Unidad === 'unidad' ? 'selected' : ''}>Unidad</option>
-                  <option value="kg" ${producto.Unidad === 'kg' ? 'selected' : ''}>Kilogramo</option>
-                  <option value="gr" ${producto.Unidad === 'gr' ? 'selected' : ''}>Gramo</option>
-                  <option value="litro" ${producto.Unidad === 'litro' ? 'selected' : ''}>Litro</option>
-                  <option value="paquete" ${producto.Unidad === 'paquete' ? 'selected' : ''}>Paquete</option>
+                  <option value="unidad" ${(producto.Unidad || '') === 'unidad' ? 'selected' : ''}>Unidad</option>
+                  <option value="kg" ${(producto.Unidad || '') === 'kg' ? 'selected' : ''}>Kilogramo</option>
+                  <option value="gr" ${(producto.Unidad || '') === 'gr' ? 'selected' : ''}>Gramo</option>
+                  <option value="litro" ${(producto.Unidad || '') === 'litro' ? 'selected' : ''}>Litro</option>
+                  <option value="paquete" ${(producto.Unidad || '') === 'paquete' ? 'selected' : ''}>Paquete</option>
                 </select>
               </div>
               <div class="form-group">
                 <label for="editCategoria">Categoría:</label>
                 <select id="editCategoria" required>
-                  <option value="pan" ${producto.Categoria === 'pan' ? 'selected' : ''}>Pan</option>
-                  <option value="pasteles" ${producto.Categoria === 'pasteles' ? 'selected' : ''}>Pasteles</option>
-                  <option value="galletas" ${producto.Categoria === 'galletas' ? 'selected' : ''}>Galletas</option>
-                  <option value="bebidas" ${producto.Categoria === 'bebidas' ? 'selected' : ''}>Bebidas</option>
-                  <option value="otros" ${producto.Categoria === 'otros' ? 'selected' : ''}>Otros</option>
+                  <option value="pan" ${(producto.Categoria || '') === 'pan' ? 'selected' : ''}>Pan</option>
+                  <option value="pasteles" ${(producto.Categoria || '') === 'pasteles' ? 'selected' : ''}>Pasteles</option>
+                  <option value="galletas" ${(producto.Categoria || '') === 'galletas' ? 'selected' : ''}>Galletas</option>
+                  <option value="bebidas" ${(producto.Categoria || '') === 'bebidas' ? 'selected' : ''}>Bebidas</option>
+                  <option value="otros" ${(producto.Categoria || '') === 'otros' ? 'selected' : ''}>Otros</option>
                 </select>
               </div>
               <div class="form-buttons">
