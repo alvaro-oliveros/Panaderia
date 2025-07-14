@@ -84,4 +84,5 @@ temp/
 
 # Cache Files
 .cache/
-.pytest_cache/
+.pytest_cache/venv/
+venv/
