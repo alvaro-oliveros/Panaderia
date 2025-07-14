@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Panadería</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="dashboard-header">
+    <h1>Dashboard - Panadería</h1>
+    <div class="user-info">
+      <span id="userWelcome"></span>
+      <button onclick="logout()" class="logout-btn">Cerrar Sesión</button>
+    </div>
+  </header>
+  
+  <main class="dashboard-content">
+    <nav class="dashboard-nav">
+      <ul>
+        <li><a href="sedes.html" id="sedesLink">Gestión de Sedes</a></li>
+        <li><a href="productos.html">Gestión de Productos</a></li>
+        <li><a href="movimientos.html">Gestión de Movimientos</a></li>
+        <li><a href="sensores.html">Gestión de Sensores</a></li>
+        <li><a href="temperatura.html">Monitoreo de Temperatura</a></li>
+        <li><a href="humedad.html">Monitoreo de Humedad</a></li>
+        <li><a href="usuarios.html" id="usuariosLink">Gestión de Usuarios</a></li>
+        <li><a href="voice-chat.html" class="voice-chat-link">🎤 Chat por Voz</a></li>
+      </ul>
+    </nav>
+    
+    <!-- Analytics Dashboard Sections -->
+    <section class="analytics-dashboard">
+      <!-- Key Metrics Cards -->
+      <div class="metrics-grid">
+        <div class="metric-card sales-today">
+          <div class="metric-icon">💰</div>
+          <div class="metric-info">
+            <h3>Ventas Hoy</h3>
+            <div class="metric-value" id="salesTodayValue">Cargando...</div>
+            <div class="metric-change" id="salesTodayChange"></div>
+          </div>
+        </div>
+        
+        <div class="metric-card products-sold">
+          <div class="metric-icon">🥖</div>
+          <div class="metric-info">
+            <h3>Productos Vendidos</h3>
+            <div class="metric-value" id="productsSoldValue">Cargando...</div>
+            <div class="metric-change" id="productsSoldChange"></div>
+          </div>
+        </div>
+        
+        <div class="metric-card low-stock">
+          <div class="metric-icon">⚠️</div>
+          <div class="metric-info">
+            <h3>Stock Bajo</h3>
+            <div class="metric-value" id="lowStockValue">Cargando...</div>
+            <div class="metric-change" id="lowStockChange">Productos con menos de 10 unidades</div>
+          </div>
+        </div>
+        
+        <div class="metric-card temperature-status">
+          <div class="metric-icon">🌡️</div>
+          <div class="metric-info">
+            <h3>Temperatura Promedio</h3>
+            <div class="metric-value" id="temperatureValue">Cargando...</div>
+            <div class="metric-change" id="temperatureStatus"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Quick Insights Section -->
+      <div class="insights-section">
+        <div class="insight-card">
+          <h3>🏆 Productos Más Vendidos Hoy</h3>
+          <div class="insight-content" id="topProductsToday">
+            <div class="loading">Cargando insights...</div>
+          </div>
+        </div>
+        
+        <div class="insight-card">
+          <h3>📊 Rendimiento por Sede</h3>
+          <div class="insight-content" id="sedesPerformance">
+            <div class="loading">Cargando análisis...</div>
+          </div>
+        </div>
+        
+        <div class="insight-card">
+          <h3>📈 Actividad Reciente</h3>
+          <div class="insight-content" id="recentActivity">
+            <div class="loading">Cargando actividad...</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- AI Analytics Section (Future) -->
+      <div class="ai-section">
+        <div class="ai-placeholder">
+          <div class="ai-icon">🤖</div>
+          <h3>Análisis con IA</h3>
+          <p>Próximamente: Insights inteligentes sobre tus datos de negocio</p>
+          <div class="coming-soon-features">
+            <span class="feature-tag">Predicción de demanda</span>
+            <span class="feature-tag">Análisis de tendencias</span>
+            <span class="feature-tag">Recomendaciones automáticas</span>
+            <span class="feature-tag">Detección de anomalías</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  
+  <script src="js/api.js"></script>
+  <script src="js/mock-ai-data.js"></script>
+  <script src="js/analytics-dashboard.js"></script>
+</body>
+</html>

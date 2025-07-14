@@ -1,0 +1,56 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.so
+
+# Database
+backend/panaderia.db
+*.db
+
+# Logs
+*.log
+backend/frontend.log
+backend/server.log
+frontend.log
+server.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+ESP32_SETUP_GUIDE.md
+CLAUDE.md
+
+# Scripts
+start.sh
+start.bat
+test_*.py
+add_*.py
+fix_*.py
+# Keep generate_business_data.py (don't ignore it)
+
+# Hardware
+esp32_bakery_sensor/

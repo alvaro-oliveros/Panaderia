@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios - Panadería</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="dashboard-header">
+        <h1>Gestión de Usuarios</h1>
+        <div class="user-info">
+            <span id="userWelcome"></span>
+            <a href="index.html" class="back-btn">← Dashboard</a>
+            <button onclick="logout()" class="logout-btn">Cerrar Sesión</button>
+        </div>
+    </header>
+    
+    <main class="dashboard-content">
+        <div class="management-container">
+            <div class="form-section">
+                <h2>Agregar Nuevo Usuario</h2>
+                <form id="formUsuario">
+                    <div class="form-group">
+                        <label for="username">Nombre de Usuario:</label>
+                        <input type="text" placeholder="Nombre de usuario único" id="username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Contraseña:</label>
+                        <input type="password" placeholder="Contraseña" id="password" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="rol">Rol:</label>
+                        <select id="rol" required>
+                            <option value="">Seleccionar rol...</option>
+                            <option value="admin">Administrador</option>
+                            <option value="usuario">Usuario Regular</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="sedesGroup" style="display: none;">
+                        <label for="sedes">Sedes Asignadas:</label>
+                        <div id="sedesCheckboxes" class="checkboxes-container">
+                        </div>
+                    </div>
+                    
+                    <button type="submit">Crear Usuario</button>
+                </form>
+            </div>
+            
+            <div class="table-section">
+                <h2>Lista de Usuarios</h2>
+                <div class="table-container">
+                    <table id="usuariosTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Usuario</th>
+                                <th>Rol</th>
+                                <th>Sedes Asignadas</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usuariosTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para editar usuario -->
+    <div id="editModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Usuario</h3>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editUserId">
+                <div class="form-group">
+                    <label for="editUsername">Nombre de Usuario:</label>
+                    <input type="text" id="editUsername" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editPassword">Nueva Contraseña (dejar vacío para no cambiar):</label>
+                    <input type="password" id="editPassword" placeholder="Nueva contraseña (opcional)">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editRol">Rol:</label>
+                    <select id="editRol" required>
+                        <option value="admin">Administrador</option>
+                        <option value="usuario">Usuario Regular</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="editSedesGroup" style="display: none;">
+                    <label for="editSedes">Sedes Asignadas:</label>
+                    <div id="editSedesCheckboxes" class="checkboxes-container">
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" onclick="closeEditModal()" class="cancel-btn">Cancelar</button>
+                    <button type="submit" class="save-btn">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userData = checkAuth();
+            if (!userData || userData.userType !== 'admin') {
+                alert('Acceso denegado. Solo administradores pueden gestionar usuarios.');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            setupUserInterface(userData);
+            loadSedes();
+            loadUsuarios();
+            
+            // Add role change handler
+            document.getElementById('rol').addEventListener('change', function() {
+                const sedesGroup = document.getElementById('sedesGroup');
+                if (this.value === 'usuario') {
+                    sedesGroup.style.display = 'block';
+                } else {
+                    sedesGroup.style.display = 'none';
+                }
+            });
+
+            // Add edit role change handler
+            document.getElementById('editRol').addEventListener('change', function() {
+                const editSedesGroup = document.getElementById('editSedesGroup');
+                if (this.value === 'usuario') {
+                    editSedesGroup.style.display = 'block';
+                } else {
+                    editSedesGroup.style.display = 'none';
+                }
+            });
+
+            // Add form submit handler
+            document.getElementById('formUsuario').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const selectedSedes = [];
+                if (document.getElementById('rol').value === 'usuario') {
+                    const checkboxes = document.querySelectorAll('#sedesCheckboxes input[type="checkbox"]:checked');
+                    checkboxes.forEach(cb => selectedSedes.push(parseInt(cb.value)));
+                }
+                
+                const formData = {
+                    username: document.getElementById('username').value,
+                    password: document.getElementById('password').value,
+                    rol: document.getElementById('rol').value,
+                    sede_ids: selectedSedes
+                };
+                
+                try {
+                    const response = await fetch(`${API_URL}/usuarios/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    if (response.ok) {
+                        alert('Usuario creado exitosamente');
+                        document.getElementById('formUsuario').reset();
+                        loadUsuarios();
+                    } else {
+                        const error = await response.json();
+                        alert('Error al crear usuario: ' + error.detail);
+                    }
+                } catch (error) {
+                    alert('Error de conexión: ' + error.message);
+                }
+            });
+
+            // Add edit form submit handler
+            document.getElementById('editForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const userId = document.getElementById('editUserId').value;
+                const rol = document.getElementById('editRol').value;
+                
+                const selectedSedes = [];
+                if (rol === 'usuario') {
+                    const checkboxes = document.querySelectorAll('#editSedesCheckboxes input[type="checkbox"]:checked');
+                    checkboxes.forEach(cb => selectedSedes.push(parseInt(cb.value)));
+                }
+                
+                const formData = {
+                    username: document.getElementById('editUsername').value,
+                    rol: rol,
+                    sede_ids: selectedSedes
+                };
+                
+                // Only include password if it's not empty
+                const newPassword = document.getElementById('editPassword').value;
+                if (newPassword.trim()) {
+                    formData.password = newPassword;
+                }
+                
+                try {
+                    const response = await fetch(`${API_URL}/usuarios/${userId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    if (response.ok) {
+                        alert('Usuario actualizado exitosamente');
+                        closeEditModal();
+                        loadUsuarios();
+                    } else {
+                        const error = await response.json();
+                        alert('Error al actualizar usuario: ' + error.detail);
+                    }
+                } catch (error) {
+                    alert('Error de conexión: ' + error.message);
+                }
+            });
+        });
+
+        function setupUserInterface(userData) {
+            const userWelcome = document.getElementById('userWelcome');
+            userWelcome.textContent = `Administrador ${userData.username}`;
+        }
+
+        async function loadSedes() {
+            try {
+                const response = await fetch(`${API_URL}/sedes/`);
+                const sedes = await response.json();
+                
+                // Populate create form checkboxes
+                const sedesCheckboxes = document.getElementById('sedesCheckboxes');
+                sedesCheckboxes.innerHTML = '';
+                sedes.forEach(sede => {
+                    const checkboxContainer = document.createElement('div');
+                    checkboxContainer.className = 'checkbox-item';
+                    checkboxContainer.innerHTML = `
+                        <label>
+                            <input type="checkbox" value="${sede.idSedes}">
+                            ${sede.Nombre}
+                        </label>
+                    `;
+                    sedesCheckboxes.appendChild(checkboxContainer);
+                });
+                
+                // Populate edit form checkboxes
+                const editSedesCheckboxes = document.getElementById('editSedesCheckboxes');
+                editSedesCheckboxes.innerHTML = '';
+                sedes.forEach(sede => {
+                    const checkboxContainer = document.createElement('div');
+                    checkboxContainer.className = 'checkbox-item';
+                    checkboxContainer.innerHTML = `
+                        <label>
+                            <input type="checkbox" value="${sede.idSedes}">
+                            ${sede.Nombre}
+                        </label>
+                    `;
+                    editSedesCheckboxes.appendChild(checkboxContainer);
+                });
+            } catch (error) {
+                console.error('Error loading sedes:', error);
+            }
+        }
+
+        async function loadUsuarios() {
+            try {
+                const [usuariosResponse, sedesResponse] = await Promise.all([
+                    fetch(`${API_URL}/usuarios/`),
+                    fetch(`${API_URL}/sedes/`)
+                ]);
+                const usuarios = await usuariosResponse.json();
+                const sedes = await sedesResponse.json();
+                
+                // Create sedes lookup map
+                const sedesMap = {};
+                sedes.forEach(sede => {
+                    sedesMap[sede.idSedes] = sede.Nombre;
+                });
+                
+                const tbody = document.getElementById('usuariosTableBody');
+                tbody.innerHTML = '';
+                usuarios.forEach(usuario => {
+                    const sedeNames = usuario.sede_ids.map(id => sedesMap[id] || `Sede ${id}`);
+                    const sedesDisplay = usuario.rol === 'admin' ? 'Todas' : (sedeNames.length > 0 ? sedeNames.join(', ') : 'Ninguna');
+                    
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>${usuario.idUsuarios}</td>
+                        <td>${usuario.username}</td>
+                        <td><span class="user-role ${usuario.rol}">${usuario.rol}</span></td>
+                        <td>${sedesDisplay}</td>
+                        <td>
+                            <button class="action-btn edit-btn" onclick="editUsuario(${usuario.idUsuarios}, '${usuario.username}', '${usuario.rol}', '${usuario.sede_ids ? usuario.sede_ids.join(',') : ''}')">Editar</button>
+                            <button class="action-btn delete-btn" onclick="deleteUsuario(${usuario.idUsuarios})">Eliminar</button>
+                        </td>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading usuarios:', error);
+            }
+        }
+
+        function editUsuario(id, username, rol, sedeIds) {
+            // Check if modal exists
+            const modal = document.getElementById('editModal');
+            if (!modal) {
+                return;
+            }
+            
+            document.getElementById('editUserId').value = id;
+            document.getElementById('editUsername').value = username;
+            document.getElementById('editRol').value = rol;
+            document.getElementById('editPassword').value = '';
+            
+            // Parse sede IDs from comma-separated string
+            const sedeIdArray = sedeIds ? sedeIds.split(',').map(id => parseInt(id)).filter(id => !isNaN(id)) : [];
+            
+            // Show/hide sedes group based on role
+            const editSedesGroup = document.getElementById('editSedesGroup');
+            if (editSedesGroup) {
+                if (rol === 'usuario') {
+                    editSedesGroup.style.display = 'block';
+                    
+                    // Uncheck all checkboxes first
+                    const checkboxes = document.querySelectorAll('#editSedesCheckboxes input[type="checkbox"]');
+                    checkboxes.forEach(cb => cb.checked = false);
+                    
+                    // Check the assigned sedes
+                    sedeIdArray.forEach(sedeId => {
+                        const checkbox = document.querySelector(`#editSedesCheckboxes input[value="${sedeId}"]`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                } else {
+                    editSedesGroup.style.display = 'none';
+                }
+            }
+            
+            modal.classList.add('show');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        async function deleteUsuario(id) {
+            if (confirm('¿Está seguro de que desea eliminar este usuario?')) {
+                try {
+                    const response = await fetch(`${API_URL}/usuarios/${id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        alert('Usuario eliminado exitosamente');
+                        loadUsuarios();
+                    } else {
+                        alert('Error al eliminar usuario');
+                    }
+                } catch (error) {
+                    alert('Error de conexión: ' + error.message);
+                }
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target == modal) {
+                closeEditModal();
+            }
+        }
+    </script>
+</body>
+</html>

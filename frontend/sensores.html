@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Sensores - Panadería</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="dashboard-header">
+    <h1>Gestión de Sensores</h1>
+    <div class="user-info">
+      <span id="userWelcome"></span>
+      <a href="index.html" class="back-btn">← Dashboard</a>
+      <button onclick="logout()" class="logout-btn">Cerrar Sesión</button>
+    </div>
+  </header>
+  
+  <main class="dashboard-content">
+    <div class="management-container">
+      <div class="form-section">
+        <h2>Agregar Nuevo Sensor</h2>
+        <form id="formSensor">
+          <div class="form-group">
+            <label for="nombre">Nombre:</label>
+            <input type="text" placeholder="Nombre del sensor" id="nombre" required />
+          </div>
+          
+          <div class="form-group">
+            <label for="descripcion">Descripción:</label>
+            <input type="text" placeholder="Descripción del sensor" id="descripcion" required />
+          </div>
+          
+          <div class="form-group">
+            <label for="sede_id">Sede:</label>
+            <select id="sede_id" required>
+              <option value="">Seleccionar sede</option>
+            </select>
+          </div>
+          
+          <button type="submit" class="submit-btn">Agregar Sensor</button>
+        </form>
+      </div>
+      
+      <div class="table-section">
+        <h2>Lista de Sensores</h2>
+        <table id="tablaSensores">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Sede</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal para editar sensor -->
+  <div id="modalEditar" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Editar Sensor</h2>
+      <form id="formEditarSensor">
+        <input type="hidden" id="editId">
+        
+        <div class="form-group">
+          <label for="editNombre">Nombre:</label>
+          <input type="text" id="editNombre" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="editDescripcion">Descripción:</label>
+          <input type="text" id="editDescripcion" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="editSedeId">Sede:</label>
+          <select id="editSedeId" required>
+            <option value="">Seleccionar sede</option>
+          </select>
+        </div>
+        
+        <button type="submit" class="submit-btn">Actualizar Sensor</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/sensores.js"></script>
+</body>
+</html>
