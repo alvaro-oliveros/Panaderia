@@ -5,8 +5,8 @@ function getApiUrl() {
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
         return 'http://127.0.0.1:8000';
     } else {
-        // Use HTTPS and let nginx proxy to backend via /api/ path
-        return `https://${hostname}/api`;
+        // Use same protocol as current page and let nginx proxy to backend via /api/ path
+        return `${window.location.protocol}//${hostname}/api`;
     }
 }
 
