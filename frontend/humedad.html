@@ -5,6 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monitoreo de Humedad - Panadería</title>
   <link rel="stylesheet" href="css/style.css">
+  <script>
+    // Immediate auth check to prevent flash of content
+    (function() {
+      const userData = sessionStorage.getItem('userData');
+      if (!userData) {
+        window.location.href = 'login.html';
+        return;
+      }
+      // If we get here, user is authenticated, show the page
+      document.documentElement.style.visibility = 'visible';
+    })();
+  </script>
+  <style>
+    /* Hide content by default until auth check completes */
+    html { visibility: hidden; }
+  </style>
 </head>
 <body>
   <header class="dashboard-header">
