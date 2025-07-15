@@ -35,6 +35,7 @@ function setupUserInterface(userData) {
         userWelcome.textContent = `Bienvenido, ${userData.username}`;
         // Hide admin-only features
         if (usuariosLink) usuariosLink.style.display = 'none';
+        if (sedesLink) sedesLink.style.display = 'none';
     }
 }
 
