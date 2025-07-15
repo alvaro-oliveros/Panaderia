@@ -6,11 +6,15 @@ const AI_CONFIG = {
 
 // Timezone utility function for Lima, Peru
 function getTodayInLimaTimezone() {
-    // Lima is UTC-5 (UTC-5 year round, no DST)
+    // Create a date in Lima timezone using Intl.DateTimeFormat
     const now = new Date();
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const limaTime = new Date(utc + (-5 * 3600000)); // UTC-5 for Lima
-    return limaTime.toISOString().split('T')[0];
+    const limaTime = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Lima',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(now);
+    return limaTime; // Returns YYYY-MM-DD format
 }
 
 document.addEventListener('DOMContentLoaded', function() {
