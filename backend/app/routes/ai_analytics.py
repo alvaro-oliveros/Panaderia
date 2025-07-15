@@ -128,16 +128,19 @@ def get_business_summary_data(db: Session, days_back: int = 7) -> Dict[str, Any]
         if sede_id in sedes_map:
             perf_data["nombre"] = sedes_map[sede_id]
     
-    # 4. Low stock products
+    # 4. Low stock products with sede information
     low_stock_products = db.query(models.Producto).filter(models.Producto.Stock < 10).all()
-    low_stock_info = [
-        {
+    low_stock_info = []
+    for p in low_stock_products:
+        sede_name = sedes_map.get(p.Sede_id, f"Sede {p.Sede_id}")
+        low_stock_info.append({
             "nombre": p.Nombre,
             "stock_actual": p.Stock,
             "categoria": p.Categoria,
-            "precio": p.Precio
-        } for p in low_stock_products
-    ]
+            "precio": p.Precio,
+            "sede_id": p.Sede_id,
+            "sede_nombre": sede_name
+        })
     
     # 5. Recent temperature/humidity data
     recent_temps = db.query(models.Temperatura).order_by(desc(models.Temperatura.fecha)).limit(20).all()
@@ -207,6 +210,9 @@ async def get_business_insights(days: int = 7, db: Session = Depends(get_db)):
         2. RECOMENDACIONES ESPECÍFICAS (mejoras operativas concretas)
         3. ALERTAS (problemas que requieren atención inmediata)
         4. OPORTUNIDADES (áreas de crecimiento o optimización)
+        
+        IMPORTANTE: Cuando menciones productos con stock bajo, SIEMPRE incluye el nombre de la sede donde se encuentra cada producto.
+        Por ejemplo: "Torta de Chocolate: 8 unidades en Panadería Centro" en lugar de solo "Torta de Chocolate: 8 unidades".
         
         Enfócate en aspectos prácticos como gestión de inventario, rendimiento por ubicación, productos populares, y condiciones de almacenamiento.
         """

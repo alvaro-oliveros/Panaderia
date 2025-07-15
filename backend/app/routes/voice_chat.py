@@ -40,8 +40,10 @@ def build_database_context(db: Session, user_id: int) -> str:
     # Get business data
     business_data = get_business_summary_data(db, days_back=7)
     
-    # Get current stock alerts
+    # Get current stock alerts with sede information
     low_stock = db.query(models.Producto).filter(models.Producto.Stock < 10).all()
+    sedes = db.query(models.Sede).all()
+    sedes_map = {s.idSedes: s.Nombre for s in sedes}
     
     # Get recent environmental data
     recent_temp = db.query(models.Temperatura).order_by(desc(models.Temperatura.fecha)).first()
@@ -62,7 +64,7 @@ RESUMEN DEL NEGOCIO (últimos 7 días):
 - Promedio por transacción: ${business_data['resumen_ventas']['ingreso_promedio_transaccion']:,.2f}
 
 PRODUCTOS CON STOCK BAJO (menos de 10 unidades):
-{', '.join([f"{p.Nombre} ({p.Stock} {p.Unidad})" for p in low_stock]) if low_stock else "Todos los productos tienen stock adecuado"}
+{', '.join([f"{p.Nombre}: {p.Stock} {p.Unidad} en {sedes_map.get(p.Sede_id, f'Sede {p.Sede_id}')}" for p in low_stock]) if low_stock else "Todos los productos tienen stock adecuado"}
 
 CONDICIONES AMBIENTALES ACTUALES:
 - Temperatura: {f"{recent_temp.Temperatura:.1f}°C (hace {_get_time_ago(recent_temp.fecha)})" if recent_temp else "Sin datos de temperatura"}
