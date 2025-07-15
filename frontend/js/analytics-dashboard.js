@@ -4,6 +4,15 @@ const AI_CONFIG = {
     SHOW_MODE_INDICATOR: true  // Show which mode is active
 };
 
+// Timezone utility function for Lima, Peru
+function getTodayInLimaTimezone() {
+    // Lima is UTC-5 (UTC-5 year round, no DST)
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const limaTime = new Date(utc + (-5 * 3600000)); // UTC-5 for Lima
+    return limaTime.toISOString().split('T')[0];
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const userData = checkAuth();
     setupUserInterface(userData);
@@ -57,9 +66,9 @@ async function loadSalesToday() {
         
         const data = await response.json();
         
-        // Get today's date in YYYY-MM-DD format
-        const today = new Date().toISOString().split('T')[0];
-        console.log('📅 Today\'s date:', today);
+        // Get today's date in Lima timezone (Peru) in YYYY-MM-DD format
+        const today = getTodayInLimaTimezone();
+        console.log('📅 Today\'s date (Lima timezone):', today);
         
         // Filter sales from today
         const todaySales = data.movements.filter(mov => {
@@ -89,8 +98,8 @@ async function loadProductsSold() {
         const response = await fetch(`${API_URL}/movimientos/?limit=1000`);
         const data = await response.json();
         
-        // Get today's date in YYYY-MM-DD format
-        const today = new Date().toISOString().split('T')[0];
+        // Get today's date in Lima timezone (Peru) in YYYY-MM-DD format
+        const today = getTodayInLimaTimezone();
         
         // Count products sold today
         const todaySales = data.movements.filter(mov => {
@@ -193,8 +202,8 @@ async function loadTopProducts() {
         const movimientos = { movements: movimientosData.movements || movimientosData };
         const productos = productosData.productos || productosData;
         
-        // Get today's date in YYYY-MM-DD format
-        const today = new Date().toISOString().split('T')[0];
+        // Get today's date in Lima timezone (Peru) in YYYY-MM-DD format
+        const today = getTodayInLimaTimezone();
         
         // Filter today's sales
         const todaySales = movimientos.movements.filter(mov => {
