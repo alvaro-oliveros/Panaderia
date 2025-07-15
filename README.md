@@ -18,7 +18,7 @@ El sistema soporta configuración via variables de entorno para diferentes despl
 # Configuración del servidor
 HOST=127.0.0.1                                    # Host del servidor backend
 PORT=8000                                         # Puerto del servidor backend
-DATABASE_URL=sqlite:///./panaderias.db           # URL de la base de datos
+DATABASE_URL=sqlite:///./panaderia.db            # URL de la base de datos
 CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000  # Orígenes permitidos para CORS
 
 # Para funciones AI (opcional)
@@ -40,7 +40,7 @@ OPENAI_API_KEY=your-openai-api-key-here          # API key de OpenAI para Whispe
 cat > .env << EOF
 HOST=0.0.0.0
 PORT=8000
-DATABASE_URL=sqlite:///./panaderias.db
+DATABASE_URL=sqlite:///./panaderia.db
 CORS_ORIGINS=http://your-ec2-public-ip:3000
 CLAUDE_API_KEY=your-claude-api-key-here
 OPENAI_API_KEY=your-openai-api-key-here
@@ -443,7 +443,7 @@ El proyecto incluye un `.gitignore` comprehensivo que excluye:
 cat > .env << EOF
 HOST=0.0.0.0
 PORT=8000
-DATABASE_URL=sqlite:///./panaderias.db
+DATABASE_URL=sqlite:///./panaderia.db
 CORS_ORIGINS=http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):3000
 EOF
 
