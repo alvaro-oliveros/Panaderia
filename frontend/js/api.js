@@ -5,16 +5,18 @@ function getApiUrl() {
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
         return 'http://127.0.0.1:8000';
     } else {
-        // Use same protocol as current page and let nginx proxy to backend via /api/ path
+        // For production, use nginx proxy path
         return `${window.location.protocol}//${hostname}/api`;
     }
 }
 
 const API_URL = getApiUrl();
+// Make API_URL available globally
+window.API_URL = API_URL;
 
 function checkAuth() {
     const userData = sessionStorage.getItem('userData');
-    if (\!userData) {
+    if (!userData) {
         window.location.href = 'login.html';
         return null;
     }
@@ -35,4 +37,3 @@ function getCurrentUser() {
     const userData = checkAuth();
     return userData ? userData.userId : null;
 }
-EOF < /dev/null

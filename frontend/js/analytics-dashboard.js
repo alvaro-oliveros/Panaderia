@@ -1,7 +1,7 @@
-// AI Mode Configuration
+// AI Configuration - Real Claude API Only
 const AI_CONFIG = {
-    USE_REAL_AI: false,  // Toggle: false = mock mode, true = real Claude API
-    SHOW_MODE_INDICATOR: true  // Show which mode is active
+    USE_REAL_AI: true,  // Always use real Claude API
+    SHOW_MODE_INDICATOR: false  // Hide mode indicator since only real AI is used
 };
 
 // Timezone utility function for Lima, Peru
@@ -21,11 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const userData = checkAuth();
     setupUserInterface(userData);
     loadAnalytics();
-    
-    // Add mode indicator if enabled
-    if (AI_CONFIG.SHOW_MODE_INDICATOR) {
-        addModeIndicator();
-    }
 });
 
 function setupUserInterface(userData) {
@@ -393,27 +388,20 @@ async function loadAIInsights() {
         // Update AI section to show loading
         const aiSection = document.querySelector('.ai-section .ai-placeholder');
         if (aiSection) {
-            const modeText = AI_CONFIG.USE_REAL_AI ? 'Claude AI' : 'AI Simulado';
             aiSection.innerHTML = `
                 <div class="ai-icon">🤖</div>
                 <h3>Análisis con IA</h3>
                 <p>Generando insights inteligentes...</p>
                 <div class="ai-loading">
                     <div class="loading-spinner"></div>
-                    <span>Analizando datos con ${modeText}...</span>
+                    <span>Analizando datos con Claude AI...</span>
                 </div>
             `;
         }
 
-        if (AI_CONFIG.USE_REAL_AI) {
-            // Real Claude API mode
-            console.log('🔴 USING REAL CLAUDE API - CREDITS WILL BE CONSUMED');
-            await loadRealAIInsights();
-        } else {
-            // Mock mode - simulate API delay for realistic experience
-            console.log('🟡 USING MOCK MODE - NO API CALLS, NO CREDITS CONSUMED');
-            await loadMockAIInsights();
-        }
+        // Use real Claude API
+        console.log('🤖 USING CLAUDE AI - Generating business insights...');
+        await loadRealAIInsights();
         
     } catch (error) {
         console.error('Error loading AI insights:', error);
@@ -429,7 +417,7 @@ async function loadRealAIInsights() {
             const data = await response.json();
             
             if (data.success && data.ai_insights) {
-                updateAISection(data.ai_insights, data.data, 'real');
+                updateAISection(data.ai_insights, data.data);
             } else {
                 showAIError("No se pudieron generar insights inteligentes");
             }
@@ -448,40 +436,17 @@ async function loadRealAIInsights() {
     }
 }
 
-async function loadMockAIInsights() {
-    // Simulate realistic API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Get mock insights
-    const mockInsights = window.mockAIData.generateMockInsights('business');
-    
-    // Simulate business data summary (this would come from your real API)
-    const mockBusinessData = {
-        resumen_ventas: {
-            total_transacciones: 156,
-            total_ingresos: 4847.50,
-            ingreso_promedio_transaccion: 31.07
-        },
-        periodo_analisis: "Últimos 7 días"
-    };
-    
-    updateAISection(mockInsights, mockBusinessData, 'mock');
-}
 
-function updateAISection(aiInsights, businessData, mode = 'unknown') {
+function updateAISection(aiInsights, businessData) {
     const aiSection = document.querySelector('.ai-section .ai-placeholder');
     if (!aiSection) return;
     
     // Format AI insights for display
     const formattedInsights = formatAIInsights(aiInsights);
     
-    // Mode indicator
-    const modeIndicator = AI_CONFIG.SHOW_MODE_INDICATOR ? 
-        `<div class="ai-mode-indicator ${mode}">${mode === 'real' ? '🔴 LIVE' : '🟡 DEMO'}</div>` : '';
-    
     aiSection.innerHTML = `
         <div class="ai-icon">🤖</div>
-        <h3>Insights Inteligentes ${modeIndicator}</h3>
+        <h3>Insights Inteligentes</h3>
         <div class="ai-insights-content">
             ${formattedInsights}
         </div>
@@ -545,40 +510,3 @@ function showAISetupInstructions() {
     }
 }
 
-function addModeIndicator() {
-    // Add mode toggle for development
-    const header = document.querySelector('.dashboard-header');
-    if (header) {
-        const modeToggle = document.createElement('div');
-        modeToggle.className = 'ai-mode-toggle';
-        modeToggle.innerHTML = `
-            <small style="margin-right: 10px;">
-                AI Mode: <strong>${AI_CONFIG.USE_REAL_AI ? 'REAL' : 'MOCK'}</strong>
-                <button onclick="toggleAIMode()" style="margin-left: 5px; padding: 2px 6px; font-size: 10px;">
-                    Switch to ${AI_CONFIG.USE_REAL_AI ? 'MOCK' : 'REAL'}
-                </button>
-            </small>
-        `;
-        header.appendChild(modeToggle);
-    }
-}
-
-function toggleAIMode() {
-    AI_CONFIG.USE_REAL_AI = !AI_CONFIG.USE_REAL_AI;
-    
-    // Update mode indicator
-    const modeToggle = document.querySelector('.ai-mode-toggle');
-    if (modeToggle) {
-        modeToggle.innerHTML = `
-            <small style="margin-right: 10px;">
-                AI Mode: <strong>${AI_CONFIG.USE_REAL_AI ? 'REAL' : 'MOCK'}</strong>
-                <button onclick="toggleAIMode()" style="margin-left: 5px; padding: 2px 6px; font-size: 10px;">
-                    Switch to ${AI_CONFIG.USE_REAL_AI ? 'MOCK' : 'REAL'}
-                </button>
-            </small>
-        `;
-    }
-    
-    // Reload AI insights with new mode
-    loadAIInsights();
-}

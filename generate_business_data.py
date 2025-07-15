@@ -390,6 +390,48 @@ def generate_realistic_transaction(product, date, is_weekend, is_holiday):
     
     return movement_type, round(cantidad, 2), round(precio, 2)
 
+def create_users():
+    """Create default admin and regular users"""
+    print("\n👥 Creando usuarios del sistema...")
+    
+    users_created = 0
+    
+    # Create admin user
+    admin_data = {
+        "username": "admin",
+        "password": "admin123", 
+        "rol": "admin"
+    }
+    
+    try:
+        response = requests.post(f"{API_URL}/usuarios/", json=admin_data)
+        if response.status_code == 200:
+            print("   ✅ Usuario admin creado")
+            users_created += 1
+        else:
+            print(f"   ⚠️  Admin ya existe o error: {response.status_code}")
+    except Exception as e:
+        print(f"   ❌ Error creando admin: {e}")
+    
+    # Create regular user
+    user_data = {
+        "username": "user2",
+        "password": "user2",
+        "rol": "usuario" 
+    }
+    
+    try:
+        response = requests.post(f"{API_URL}/usuarios/", json=user_data)
+        if response.status_code == 200:
+            print("   ✅ Usuario user2 creado")
+            users_created += 1
+        else:
+            print(f"   ⚠️  User2 ya existe o error: {response.status_code}")
+    except Exception as e:
+        print(f"   ❌ Error creando user2: {e}")
+    
+    return users_created
+
 def main():
     """Main data generation function"""
     print("🍞 Generador de Datos de Negocio - Sistema de Panadería")
@@ -406,6 +448,9 @@ def main():
     start_time = time.time()
     
     try:
+        # Step 0: Create users
+        users_count = create_users()
+        
         # Step 1: Create sedes
         sedes = create_sedes()
         if not sedes:
@@ -428,6 +473,7 @@ def main():
         print("\n" + "=" * 60)
         print("🎉 GENERACIÓN DE DATOS COMPLETADA")
         print("=" * 60)
+        print(f"👥 Usuarios creados: {users_count}")
         print(f"📍 Sedes creadas: {len(sedes)}")
         print(f"🥖 Productos creados: {len(products)}")
         print(f"📊 Movimientos generados: {movements_count}")

@@ -43,6 +43,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function authenticateUser(username, password) {
     try {
+        console.log('Using API URL:', API_URL);
+        
         const response = await fetch(`${API_URL}/usuarios/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
