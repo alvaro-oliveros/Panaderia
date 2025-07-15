@@ -421,7 +421,7 @@ table {
 
 table th, table td {
   padding: 0.75rem;
-  text-align: left;
+  text-align: center;
   border-bottom: 1px solid #eee;
 }
 
