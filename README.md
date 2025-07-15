@@ -482,36 +482,11 @@ Clase de configuración centralizada que maneja:
 - Configuración de CORS
 - Detección automática de rutas absolutas para SQLite
 
-## 🚀 Próximas Funcionalidades
-
-- [ ] Reportes y análisis de ventas avanzados
-- [ ] Integración con sistemas de punto de venta
-- [ ] ✅ ~~Notificaciones de stock bajo~~ (Implementado)
-- [ ] Backup automático de datos
-- [ ] API móvil para empleados
-- [ ] ✅ ~~Paginación de productos~~ (Implementado)
-- [ ] ✅ ~~AI Analytics~~ (Implementado)
-- [ ] ✅ ~~IoT Sensor Integration~~ (Implementado)
-- [ ] ✅ ~~Configuración de entornos~~ (Implementado)
-- [ ] ✅ ~~Speech-to-Text AI Chatbot~~ (Implementado)
-- [ ] Respuestas de voz (Text-to-Speech)
-- [ ] Comandos de voz para acciones (registrar ventas, etc.)
-- [ ] Reconocimiento de múltiples usuarios por voz
-
-## 📞 Contribuir
-
-1. Fork el repositorio
-2. Crear feature branch: `git checkout -b feature/nueva-funcionalidad`
-3. Commit cambios: `git commit -m 'Agregar nueva funcionalidad'`
-4. Push al branch: `git push origin feature/nueva-funcionalidad`
-5. Crear Pull Request
-
----
 
 **🔧 Stack Técnico:**
 - **Backend**: FastAPI + SQLAlchemy + SQLite
 - **Frontend**: HTML5 + CSS3 + Vanilla JavaScript
-- **AI**: Claude (Anthropic) API integration
+- **AI**: Claude (Anthropic), OpenAI API integration
 - **IoT**: ESP32 + Arduino + DHT22 sensors
 - **Analytics**: Real-time dashboard with AI insights
 
