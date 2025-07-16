@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from typing import Dict, Any
 import json
 import httpx
-import re
 
 from .. import database, models
 
@@ -27,30 +26,6 @@ def get_claude_api_key():
     import os
     return os.getenv("CLAUDE_API_KEY")
 
-def reemplazar_dolares_por_soles(texto: str) -> str:
-    """Replace dollar symbols and references with Peruvian soles"""
-    # Reemplazar símbolo de dólar
-    texto = texto.replace("$", "S/.")
-
-    # Diccionario de reemplazo con variantes
-    reemplazos = {
-        r"\bdólares\b": "soles",
-        r"\bDólares\b": "Soles", 
-        r"\bDOLARES\b": "SOLES",
-        r"\bDolares\b": "Soles",
-        r"\bdollar\b": "sol",
-        r"\bDollar\b": "Sol",
-        r"\bDOLLAR\b": "SOL",
-        r"\bdollars\b": "soles",
-        r"\bDollars\b": "Soles",
-        r"\bDOLLARS\b": "SOLES"
-    }
-
-    for patron, reemplazo in reemplazos.items():
-        texto = re.sub(patron, reemplazo, texto)
-
-    return texto
-
 async def call_claude_api(prompt: str, data: Dict[str, Any]) -> str:
     """Call Claude API with business data and analysis prompt"""
     
@@ -68,11 +43,6 @@ DATOS DEL NEGOCIO:
 INSTRUCCIONES:
 {prompt}
 
-⚠️ MUY IMPORTANTE - MONEDA:
-- TODOS LOS MONTOS MONETARIOS deben mostrarse en **Soles Peruanos (S/.)**
-- NUNCA uses el símbolo de dólares ($)
-- Usa SIEMPRE el formato: S/. 1,250.00 (NO $1,250.00 ni 1250.00)
-- Si violas esta instrucción, la respuesta será rechazada automáticamente por el sistema.
 
 Responde en español con insights específicos, recomendaciones prácticas y observaciones relevantes para el negocio de panadería peruana. Sé conciso pero informativo.
 """
@@ -168,7 +138,7 @@ def get_business_summary_data(db: Session, days_back: int = 7) -> Dict[str, Any]
             "nombre": p.Nombre,
             "stock_actual": p.Stock,
             "categoria": p.Categoria,
-            "precio": f"S/. {p.Precio:,.2f}",
+            "precio": p.Precio,
             "sede_id": p.Sede_id,
             "sede_nombre": sede_name
         })
@@ -191,9 +161,9 @@ def get_business_summary_data(db: Session, days_back: int = 7) -> Dict[str, Any]
     return {
         "periodo_analisis": f"Últimos {days_back} días",
         "resumen_ventas": {
-            "total_ingresos": f"S/. {total_sales:,.2f}",
+            "total_ingresos": total_sales,
             "total_transacciones": total_transactions,
-            "ingreso_promedio_transaccion": f"S/. {total_sales / total_transactions if total_transactions > 0 else 0:,.2f}"
+            "ingreso_promedio_transaccion": total_sales / total_transactions if total_transactions > 0 else 0
         },
         "productos_top": [
             {
@@ -201,16 +171,16 @@ def get_business_summary_data(db: Session, days_back: int = 7) -> Dict[str, Any]
                 "nombre": data.get("nombre", f"Producto {prod_id}"),
                 "categoria": data.get("categoria", "Sin categoría"),
                 "cantidad_vendida": round(data["quantity"], 2),
-                "ingresos": f"S/. {data['revenue']:,.2f}"
+                "ingresos": data['revenue']
             } for prod_id, data in top_products
         ],
         "performance_sedes": [
             {
                 "sede_id": sede_id,
                 "nombre": data.get("nombre", f"Sede {sede_id}"),
-                "ingresos": f"S/. {data['revenue']:,.2f}",
+                "ingresos": data['revenue'],
                 "transacciones": data["transactions"],
-                "ingreso_promedio": f"S/. {data['revenue'] / data['transactions'] if data['transactions'] > 0 else 0:,.2f}"
+                "ingreso_promedio": data['revenue'] / data['transactions'] if data['transactions'] > 0 else 0
             } for sede_id, data in sede_performance.items()
         ],
         "productos_stock_bajo": low_stock_info,
@@ -242,13 +212,8 @@ async def get_business_insights(days: int = 7, db: Session = Depends(get_db)):
         3. ALERTAS (problemas que requieren atención inmediata)
         4. OPORTUNIDADES (áreas de crecimiento o optimización)
         
-        ⚠️ MUY IMPORTANTE:
-        - TODOS LOS MONTOS MONETARIOS deben mostrarse en **Soles Peruanos (S/.)**
-        - NUNCA uses el símbolo de dólares ($)
-        - Usa SIEMPRE el formato: S/. 1,250.00 (NO $1,250.00 ni 1250.00)
-        - Si violas esta instrucción, la respuesta será rechazada automáticamente por el sistema.
-        - Cuando menciones productos con stock bajo, SIEMPRE incluye el nombre de la sede donde se encuentra cada producto.
-        - Ejemplo: "Torta de Chocolate: 8 unidades en Panadería Centro" y "Ingresos: S/. 1,250.00".
+        Cuando menciones productos con stock bajo, SIEMPRE incluye el nombre de la sede donde se encuentra cada producto.
+        Ejemplo: "Torta de Chocolate: 8 unidades en Panadería Centro".
         
         Enfócate en aspectos prácticos como gestión de inventario, rendimiento por ubicación, productos populares, y condiciones de almacenamiento.
         """
@@ -256,8 +221,6 @@ async def get_business_insights(days: int = 7, db: Session = Depends(get_db)):
         # Call Claude API
         ai_response = await call_claude_api(prompt, business_data)
         
-        # Post-process the AI response to ensure correct currency
-        ai_response = reemplazar_dolares_por_soles(ai_response)
         
         return {
             "success": True,
