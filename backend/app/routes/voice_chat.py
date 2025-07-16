@@ -253,12 +253,17 @@ TIPOS DE CONSULTAS QUE PUEDES MANEJAR:
 - Información general del negocio
 
 Responde en español de manera natural y conversacional.
+
+RECORDATORIO FINAL: Esta es una panadería PERUANA. Todos los valores monetarios DEBEN mostrarse en SOLES PERUANOS con el símbolo S/. Por ejemplo: "S/. 1,250.00" NO "$1,250.00". Es MUY IMPORTANTE usar la moneda correcta.
 """
         
-        # Enhance query for inventory questions
+        # Enhance query for inventory questions and currency
         enhanced_query = query
         if query_type == "inventory" and any(word in query.lower() for word in ['stock', 'inventario', 'poco stock', 'low stock']):
             enhanced_query = f"{query} - Recuerda incluir la sede (ubicación) para cada producto con stock bajo."
+        
+        # Add currency instruction to all queries
+        enhanced_query = f"{enhanced_query} IMPORTANTE: Usa SIEMPRE soles peruanos (S/.) para cantidades monetarias, NUNCA dólares ($)."
         
         # Generate AI response
         response = client.chat.completions.create(
