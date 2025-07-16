@@ -57,9 +57,9 @@ INFORMACIÓN DEL USUARIO:
 - Permisos: {'Administrador total' if user.rol == 'admin' else 'Usuario regular con acceso limitado'}
 
 RESUMEN DEL NEGOCIO (últimos 7 días):
-- Ingresos totales: S/. {business_data['resumen_ventas']['total_ingresos']:,.2f}
+- Ingresos totales: {business_data['resumen_ventas']['total_ingresos']}
 - Transacciones: {business_data['resumen_ventas']['total_transacciones']}
-- Promedio por transacción: S/. {business_data['resumen_ventas']['ingreso_promedio_transaccion']:,.2f}
+- Promedio por transacción: {business_data['resumen_ventas']['ingreso_promedio_transaccion']}
 
 PRODUCTOS CON STOCK BAJO (menos de 10 unidades):
 {', '.join([f"{p['nombre']}: {p['stock_actual']} unidades en {p.get('sede_nombre', 'Sede no especificada')}" for p in low_stock_with_sede]) if low_stock_with_sede else "Todos los productos tienen stock adecuado"}
@@ -72,10 +72,10 @@ SEDES OPERATIVAS: {business_data['total_sedes']}
 PRODUCTOS TOTALES: {business_data['total_productos']}
 
 PRODUCTOS MÁS VENDIDOS (últimos 7 días):
-{chr(10).join([f"- {p['nombre']}: {p['cantidad_vendida']} unidades (S/. {p['ingresos']:,.2f})" for p in business_data['productos_top'][:5]])}
+{chr(10).join([f"- {p['nombre']}: {p['cantidad_vendida']} unidades ({p['ingresos']})" for p in business_data['productos_top'][:5]])}
 
 RENDIMIENTO POR SEDE:
-{chr(10).join([f"- {s['nombre']}: S/. {s['ingresos']:,.2f} en {s['transacciones']} transacciones" for s in business_data['performance_sedes']])}
+{chr(10).join([f"- {s['nombre']}: {s['ingresos']} en {s['transacciones']} transacciones" for s in business_data['performance_sedes']])}
 """
     
     return context

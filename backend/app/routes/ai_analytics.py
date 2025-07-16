@@ -139,7 +139,7 @@ def get_business_summary_data(db: Session, days_back: int = 7) -> Dict[str, Any]
             "nombre": p.Nombre,
             "stock_actual": p.Stock,
             "categoria": p.Categoria,
-            "precio": p.Precio,
+            "precio": f"S/. {p.Precio:,.2f}",
             "sede_id": p.Sede_id,
             "sede_nombre": sede_name
         })
@@ -162,9 +162,9 @@ def get_business_summary_data(db: Session, days_back: int = 7) -> Dict[str, Any]
     return {
         "periodo_analisis": f"Últimos {days_back} días",
         "resumen_ventas": {
-            "total_ingresos": round(total_sales, 2),
+            "total_ingresos": f"S/. {total_sales:,.2f}",
             "total_transacciones": total_transactions,
-            "ingreso_promedio_transaccion": round(total_sales / total_transactions if total_transactions > 0 else 0, 2)
+            "ingreso_promedio_transaccion": f"S/. {total_sales / total_transactions if total_transactions > 0 else 0:,.2f}"
         },
         "productos_top": [
             {
@@ -172,16 +172,16 @@ def get_business_summary_data(db: Session, days_back: int = 7) -> Dict[str, Any]
                 "nombre": data.get("nombre", f"Producto {prod_id}"),
                 "categoria": data.get("categoria", "Sin categoría"),
                 "cantidad_vendida": round(data["quantity"], 2),
-                "ingresos": round(data["revenue"], 2)
+                "ingresos": f"S/. {data['revenue']:,.2f}"
             } for prod_id, data in top_products
         ],
         "performance_sedes": [
             {
                 "sede_id": sede_id,
                 "nombre": data.get("nombre", f"Sede {sede_id}"),
-                "ingresos": round(data["revenue"], 2),
+                "ingresos": f"S/. {data['revenue']:,.2f}",
                 "transacciones": data["transactions"],
-                "ingreso_promedio": round(data["revenue"] / data["transactions"] if data["transactions"] > 0 else 0, 2)
+                "ingreso_promedio": f"S/. {data['revenue'] / data['transactions'] if data['transactions'] > 0 else 0:,.2f}"
             } for sede_id, data in sede_performance.items()
         ],
         "productos_stock_bajo": low_stock_info,
