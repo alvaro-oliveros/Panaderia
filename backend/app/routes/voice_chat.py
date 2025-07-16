@@ -7,6 +7,7 @@ import json
 import os
 import tempfile
 import time
+import re
 from openai import OpenAI
 
 from .. import database, models
@@ -28,6 +29,21 @@ def get_openai_client():
     if not api_key:
         raise HTTPException(status_code=500, detail="OpenAI API key no configurada")
     return OpenAI(api_key=api_key)
+
+def fix_currency_to_soles(text: str) -> str:
+    """Convert any dollar symbols to Peruvian soles"""
+    if not text:
+        return text
+    
+    # Replace $ with S/.
+    text = text.replace("$", "S/.")
+    
+    # Replace common dollar references
+    text = re.sub(r'\bdólares?\b', 'soles', text, flags=re.IGNORECASE)
+    text = re.sub(r'\bdollars?\b', 'soles', text, flags=re.IGNORECASE)
+    text = re.sub(r'\bUSD\b', 'PEN', text, flags=re.IGNORECASE)
+    
+    return text
 
 
 def build_database_context(db: Session, user_id: int) -> str:
@@ -252,6 +268,11 @@ TIPOS DE CONSULTAS QUE PUEDES MANEJAR:
 - Alertas de stock bajo
 - Información general del negocio
 
+⚠️ IMPORTANTE - MONEDA PERUANA:
+- Esta es una panadería en PERÚ, usa SOLES PERUANOS (S/.)
+- TODOS los montos monetarios deben mostrarse como: S/. 1,250.00
+- NUNCA uses dólares ($) - solo soles peruanos (S/.)
+
 Responde en español de manera natural y conversacional.
 """
         
@@ -273,6 +294,8 @@ Responde en español de manera natural y conversacional.
         
         ai_response = response.choices[0].message.content
         
+        # Fix currency to soles
+        ai_response = fix_currency_to_soles(ai_response)
         
         execution_time = int((time.time() - start_time) * 1000)
         

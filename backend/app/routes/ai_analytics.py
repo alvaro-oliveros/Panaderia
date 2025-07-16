@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any
 import json
 import httpx
+import re
 
 from .. import database, models
 
@@ -26,6 +27,21 @@ def get_claude_api_key():
     import os
     return os.getenv("CLAUDE_API_KEY")
 
+def fix_currency_to_soles(text: str) -> str:
+    """Convert any dollar symbols to Peruvian soles"""
+    if not text:
+        return text
+    
+    # Replace $ with S/.
+    text = text.replace("$", "S/.")
+    
+    # Replace common dollar references
+    text = re.sub(r'\bdólares?\b', 'soles', text, flags=re.IGNORECASE)
+    text = re.sub(r'\bdollars?\b', 'soles', text, flags=re.IGNORECASE)
+    text = re.sub(r'\bUSD\b', 'PEN', text, flags=re.IGNORECASE)
+    
+    return text
+
 async def call_claude_api(prompt: str, data: Dict[str, Any]) -> str:
     """Call Claude API with business data and analysis prompt"""
     
@@ -43,6 +59,12 @@ DATOS DEL NEGOCIO:
 INSTRUCCIONES:
 {prompt}
 
+⚠️ IMPORTANTE - MONEDA PERUANA:
+- Esta es una panadería en PERÚ, por lo tanto usa SOLES PERUANOS (S/.)
+- TODOS los montos monetarios deben mostrarse como: S/. 1,250.00
+- NUNCA uses dólares ($) - solo soles peruanos (S/.)
+- Ejemplo correcto: "Ingresos: S/. 15,234.50"
+- Ejemplo incorrecto: "Ingresos: $15,234.50"
 
 Responde en español con insights específicos, recomendaciones prácticas y observaciones relevantes para el negocio de panadería peruana. Sé conciso pero informativo.
 """
@@ -138,7 +160,7 @@ def get_business_summary_data(db: Session, days_back: int = 7) -> Dict[str, Any]
             "nombre": p.Nombre,
             "stock_actual": p.Stock,
             "categoria": p.Categoria,
-            "precio": p.Precio,
+            "precio": f"S/. {p.Precio:,.2f}",
             "sede_id": p.Sede_id,
             "sede_nombre": sede_name
         })
@@ -161,9 +183,9 @@ def get_business_summary_data(db: Session, days_back: int = 7) -> Dict[str, Any]
     return {
         "periodo_analisis": f"Últimos {days_back} días",
         "resumen_ventas": {
-            "total_ingresos": total_sales,
+            "total_ingresos": f"S/. {total_sales:,.2f}",
             "total_transacciones": total_transactions,
-            "ingreso_promedio_transaccion": total_sales / total_transactions if total_transactions > 0 else 0
+            "ingreso_promedio_transaccion": f"S/. {total_sales / total_transactions if total_transactions > 0 else 0:,.2f}"
         },
         "productos_top": [
             {
@@ -171,16 +193,16 @@ def get_business_summary_data(db: Session, days_back: int = 7) -> Dict[str, Any]
                 "nombre": data.get("nombre", f"Producto {prod_id}"),
                 "categoria": data.get("categoria", "Sin categoría"),
                 "cantidad_vendida": round(data["quantity"], 2),
-                "ingresos": data['revenue']
+                "ingresos": f"S/. {data['revenue']:,.2f}"
             } for prod_id, data in top_products
         ],
         "performance_sedes": [
             {
                 "sede_id": sede_id,
                 "nombre": data.get("nombre", f"Sede {sede_id}"),
-                "ingresos": data['revenue'],
+                "ingresos": f"S/. {data['revenue']:,.2f}",
                 "transacciones": data["transactions"],
-                "ingreso_promedio": data['revenue'] / data['transactions'] if data['transactions'] > 0 else 0
+                "ingreso_promedio": f"S/. {data['revenue'] / data['transactions'] if data['transactions'] > 0 else 0:,.2f}"
             } for sede_id, data in sede_performance.items()
         ],
         "productos_stock_bajo": low_stock_info,
@@ -215,12 +237,16 @@ async def get_business_insights(days: int = 7, db: Session = Depends(get_db)):
         Cuando menciones productos con stock bajo, SIEMPRE incluye el nombre de la sede donde se encuentra cada producto.
         Ejemplo: "Torta de Chocolate: 8 unidades en Panadería Centro".
         
+        Para montos monetarios, usa SIEMPRE soles peruanos: S/. 1,250.00 (nunca dólares $).
+        
         Enfócate en aspectos prácticos como gestión de inventario, rendimiento por ubicación, productos populares, y condiciones de almacenamiento.
         """
         
         # Call Claude API
         ai_response = await call_claude_api(prompt, business_data)
         
+        # Fix currency to soles
+        ai_response = fix_currency_to_soles(ai_response)
         
         return {
             "success": True,
