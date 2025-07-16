@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any
 import json
 import httpx
+import re
 
 from .. import database, models
 
@@ -26,6 +27,30 @@ def get_claude_api_key():
     import os
     return os.getenv("CLAUDE_API_KEY")
 
+def reemplazar_dolares_por_soles(texto: str) -> str:
+    """Replace dollar symbols and references with Peruvian soles"""
+    # Reemplazar símbolo de dólar
+    texto = texto.replace("$", "S/.")
+
+    # Diccionario de reemplazo con variantes
+    reemplazos = {
+        r"\bdólares\b": "soles",
+        r"\bDólares\b": "Soles", 
+        r"\bDOLARES\b": "SOLES",
+        r"\bDolares\b": "Soles",
+        r"\bdollar\b": "sol",
+        r"\bDollar\b": "Sol",
+        r"\bDOLLAR\b": "SOL",
+        r"\bdollars\b": "soles",
+        r"\bDollars\b": "Soles",
+        r"\bDOLLARS\b": "SOLES"
+    }
+
+    for patron, reemplazo in reemplazos.items():
+        texto = re.sub(patron, reemplazo, texto)
+
+    return texto
+
 async def call_claude_api(prompt: str, data: Dict[str, Any]) -> str:
     """Call Claude API with business data and analysis prompt"""
     
@@ -43,7 +68,11 @@ DATOS DEL NEGOCIO:
 INSTRUCCIONES:
 {prompt}
 
-IMPORTANTE: Todos los precios e ingresos están en SOLES PERUANOS (S/.). Siempre usa el símbolo S/. para las cantidades monetarias, nunca uses dólares ($) ni otras monedas.
+⚠️ MUY IMPORTANTE - MONEDA:
+- TODOS LOS MONTOS MONETARIOS deben mostrarse en **Soles Peruanos (S/.)**
+- NUNCA uses el símbolo de dólares ($)
+- Usa SIEMPRE el formato: S/. 1,250.00 (NO $1,250.00 ni 1250.00)
+- Si violas esta instrucción, la respuesta será rechazada automáticamente por el sistema.
 
 Responde en español con insights específicos, recomendaciones prácticas y observaciones relevantes para el negocio de panadería peruana. Sé conciso pero informativo.
 """
@@ -213,9 +242,12 @@ async def get_business_insights(days: int = 7, db: Session = Depends(get_db)):
         3. ALERTAS (problemas que requieren atención inmediata)
         4. OPORTUNIDADES (áreas de crecimiento o optimización)
         
-        IMPORTANTE: 
+        ⚠️ MUY IMPORTANTE:
+        - TODOS LOS MONTOS MONETARIOS deben mostrarse en **Soles Peruanos (S/.)**
+        - NUNCA uses el símbolo de dólares ($)
+        - Usa SIEMPRE el formato: S/. 1,250.00 (NO $1,250.00 ni 1250.00)
+        - Si violas esta instrucción, la respuesta será rechazada automáticamente por el sistema.
         - Cuando menciones productos con stock bajo, SIEMPRE incluye el nombre de la sede donde se encuentra cada producto.
-        - Todos los precios e ingresos están en SOLES PERUANOS (S/.). NO uses dólares ($) ni ninguna otra moneda.
         - Ejemplo: "Torta de Chocolate: 8 unidades en Panadería Centro" y "Ingresos: S/. 1,250.00".
         
         Enfócate en aspectos prácticos como gestión de inventario, rendimiento por ubicación, productos populares, y condiciones de almacenamiento.
@@ -223,6 +255,9 @@ async def get_business_insights(days: int = 7, db: Session = Depends(get_db)):
         
         # Call Claude API
         ai_response = await call_claude_api(prompt, business_data)
+        
+        # Post-process the AI response to ensure correct currency
+        ai_response = reemplazar_dolares_por_soles(ai_response)
         
         return {
             "success": True,

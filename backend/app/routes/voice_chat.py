@@ -7,6 +7,7 @@ import json
 import os
 import tempfile
 import time
+import re
 from openai import OpenAI
 
 from .. import database, models
@@ -28,6 +29,30 @@ def get_openai_client():
     if not api_key:
         raise HTTPException(status_code=500, detail="OpenAI API key no configurada")
     return OpenAI(api_key=api_key)
+
+def reemplazar_dolares_por_soles(texto: str) -> str:
+    """Replace dollar symbols and references with Peruvian soles"""
+    # Reemplazar símbolo de dólar
+    texto = texto.replace("$", "S/.")
+
+    # Diccionario de reemplazo con variantes
+    reemplazos = {
+        r"\bdólares\b": "soles",
+        r"\bDólares\b": "Soles", 
+        r"\bDOLARES\b": "SOLES",
+        r"\bDolares\b": "Soles",
+        r"\bdollar\b": "sol",
+        r"\bDollar\b": "Sol",
+        r"\bDOLLAR\b": "SOL",
+        r"\bdollars\b": "soles",
+        r"\bDollars\b": "Soles",
+        r"\bDOLLARS\b": "SOLES"
+    }
+
+    for patron, reemplazo in reemplazos.items():
+        texto = re.sub(patron, reemplazo, texto)
+
+    return texto
 
 def build_database_context(db: Session, user_id: int) -> str:
     """Build comprehensive database context for GPT queries"""
@@ -241,7 +266,11 @@ INSTRUCCIONES:
    - CORRECTO: "Torta de Chocolate: 8 unidades en Panadería Centro"
    - INCORRECTO: "Torta de Chocolate: 8 unidades"
    - La información de sede está disponible en el contexto - úsala SIEMPRE para productos con stock bajo
-9. MONEDA: Todos los precios e ingresos están en SOLES PERUANOS (S/.). Siempre usa S/. para cantidades monetarias, nunca dólares ($)
+9. ⚠️ MUY IMPORTANTE - MONEDA:
+   - TODOS LOS MONTOS MONETARIOS deben mostrarse en **Soles Peruanos (S/.)**
+   - NUNCA uses el símbolo de dólares ($)
+   - Usa SIEMPRE el formato: S/. 1,250.00 (NO $1,250.00 ni 1250.00)
+   - Si violas esta instrucción, la respuesta será rechazada automáticamente por el sistema.
 
 TIPOS DE CONSULTAS QUE PUEDES MANEJAR:
 - Ventas y ingresos
@@ -254,7 +283,11 @@ TIPOS DE CONSULTAS QUE PUEDES MANEJAR:
 
 Responde en español de manera natural y conversacional.
 
-RECORDATORIO FINAL: Esta es una panadería PERUANA. Todos los valores monetarios DEBEN mostrarse en SOLES PERUANOS con el símbolo S/. Por ejemplo: "S/. 1,250.00" NO "$1,250.00". Es MUY IMPORTANTE usar la moneda correcta.
+🚨 RECORDATORIO FINAL CRÍTICO: Esta es una panadería PERUANA. 
+- TODOS los valores monetarios DEBEN mostrarse en SOLES PERUANOS con el símbolo S/.
+- Por ejemplo: "S/. 1,250.00" NO "$1,250.00"
+- Usar dólares ($) resultará en RECHAZO AUTOMÁTICO de la respuesta
+- Es MUY IMPORTANTE usar la moneda correcta para el mercado peruano
 """
         
         # Enhance query for inventory questions and currency
@@ -277,6 +310,10 @@ RECORDATORIO FINAL: Esta es una panadería PERUANA. Todos los valores monetarios
         )
         
         ai_response = response.choices[0].message.content
+        
+        # Post-process the AI response to ensure correct currency
+        ai_response = reemplazar_dolares_por_soles(ai_response)
+        
         execution_time = int((time.time() - start_time) * 1000)
         
         # Log the voice query
