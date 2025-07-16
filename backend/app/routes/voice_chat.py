@@ -239,6 +239,7 @@ INSTRUCCIONES:
 5. Incluye números específicos cuando sea relevante
 6. Si es una consulta sobre acciones (como registrar ventas), explica el proceso
 7. Para datos ambientales, menciona si hay alguna condición preocupante
+8. IMPORTANTE: Cuando menciones productos con stock bajo, SIEMPRE incluye la sede donde se encuentra cada producto (ej: "Torta de Chocolate: 8 unidades en Panadería Centro")
 
 TIPOS DE CONSULTAS QUE PUEDES MANEJAR:
 - Ventas y ingresos
