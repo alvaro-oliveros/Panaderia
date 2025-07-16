@@ -35,7 +35,7 @@ async def call_claude_api(prompt: str, data: Dict[str, Any]) -> str:
     
     # Prepare the complete prompt with data
     full_prompt = f"""
-Eres un analista de negocio experto especializado en panaderías. Analiza los siguientes datos de negocio y proporciona insights útiles y accionables.
+Eres un analista de negocio experto especializado en panaderías peruanas. Analiza los siguientes datos de negocio y proporciona insights útiles y accionables.
 
 DATOS DEL NEGOCIO:
 {json.dumps(data, indent=2, ensure_ascii=False)}
@@ -43,7 +43,9 @@ DATOS DEL NEGOCIO:
 INSTRUCCIONES:
 {prompt}
 
-Responde en español con insights específicos, recomendaciones prácticas y observaciones relevantes para el negocio de panadería. Sé conciso pero informativo.
+IMPORTANTE: Todos los precios e ingresos están en SOLES PERUANOS (S/.). Siempre usa el símbolo S/. para las cantidades monetarias, nunca uses dólares ($) ni otras monedas.
+
+Responde en español con insights específicos, recomendaciones prácticas y observaciones relevantes para el negocio de panadería peruana. Sé conciso pero informativo.
 """
 
     headers = {
@@ -211,8 +213,10 @@ async def get_business_insights(days: int = 7, db: Session = Depends(get_db)):
         3. ALERTAS (problemas que requieren atención inmediata)
         4. OPORTUNIDADES (áreas de crecimiento o optimización)
         
-        IMPORTANTE: Cuando menciones productos con stock bajo, SIEMPRE incluye el nombre de la sede donde se encuentra cada producto.
-        Por ejemplo: "Torta de Chocolate: 8 unidades en Panadería Centro" en lugar de solo "Torta de Chocolate: 8 unidades".
+        IMPORTANTE: 
+        - Cuando menciones productos con stock bajo, SIEMPRE incluye el nombre de la sede donde se encuentra cada producto.
+        - Todos los precios e ingresos están en SOLES PERUANOS (S/.). NO uses dólares ($) ni ninguna otra moneda.
+        - Ejemplo: "Torta de Chocolate: 8 unidades en Panadería Centro" y "Ingresos: S/. 1,250.00".
         
         Enfócate en aspectos prácticos como gestión de inventario, rendimiento por ubicación, productos populares, y condiciones de almacenamiento.
         """

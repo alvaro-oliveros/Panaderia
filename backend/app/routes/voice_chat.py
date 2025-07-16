@@ -57,9 +57,9 @@ INFORMACIÓN DEL USUARIO:
 - Permisos: {'Administrador total' if user.rol == 'admin' else 'Usuario regular con acceso limitado'}
 
 RESUMEN DEL NEGOCIO (últimos 7 días):
-- Ingresos totales: ${business_data['resumen_ventas']['total_ingresos']:,.2f}
+- Ingresos totales: S/. {business_data['resumen_ventas']['total_ingresos']:,.2f}
 - Transacciones: {business_data['resumen_ventas']['total_transacciones']}
-- Promedio por transacción: ${business_data['resumen_ventas']['ingreso_promedio_transaccion']:,.2f}
+- Promedio por transacción: S/. {business_data['resumen_ventas']['ingreso_promedio_transaccion']:,.2f}
 
 PRODUCTOS CON STOCK BAJO (menos de 10 unidades):
 {', '.join([f"{p['nombre']}: {p['stock_actual']} unidades en {p.get('sede_nombre', 'Sede no especificada')}" for p in low_stock_with_sede]) if low_stock_with_sede else "Todos los productos tienen stock adecuado"}
@@ -72,10 +72,10 @@ SEDES OPERATIVAS: {business_data['total_sedes']}
 PRODUCTOS TOTALES: {business_data['total_productos']}
 
 PRODUCTOS MÁS VENDIDOS (últimos 7 días):
-{chr(10).join([f"- {p['nombre']}: {p['cantidad_vendida']} unidades (${p['ingresos']:,.2f})" for p in business_data['productos_top'][:5]])}
+{chr(10).join([f"- {p['nombre']}: {p['cantidad_vendida']} unidades (S/. {p['ingresos']:,.2f})" for p in business_data['productos_top'][:5]])}
 
 RENDIMIENTO POR SEDE:
-{chr(10).join([f"- {s['nombre']}: ${s['ingresos']:,.2f} en {s['transacciones']} transacciones" for s in business_data['performance_sedes']])}
+{chr(10).join([f"- {s['nombre']}: S/. {s['ingresos']:,.2f} en {s['transacciones']} transacciones" for s in business_data['performance_sedes']])}
 """
     
     return context
@@ -224,7 +224,7 @@ async def process_voice_query(
         
         # Create comprehensive prompt
         system_prompt = f"""
-Eres un asistente inteligente especializado en gestión de panaderías. Tu trabajo es responder preguntas sobre el negocio usando los datos proporcionados.
+Eres un asistente inteligente especializado en gestión de panaderías peruanas. Tu trabajo es responder preguntas sobre el negocio usando los datos proporcionados.
 
 CONTEXTO DE LA BASE DE DATOS:
 {context}
@@ -241,6 +241,7 @@ INSTRUCCIONES:
    - CORRECTO: "Torta de Chocolate: 8 unidades en Panadería Centro"
    - INCORRECTO: "Torta de Chocolate: 8 unidades"
    - La información de sede está disponible en el contexto - úsala SIEMPRE para productos con stock bajo
+9. MONEDA: Todos los precios e ingresos están en SOLES PERUANOS (S/.). Siempre usa S/. para cantidades monetarias, nunca dólares ($)
 
 TIPOS DE CONSULTAS QUE PUEDES MANEJAR:
 - Ventas y ingresos
