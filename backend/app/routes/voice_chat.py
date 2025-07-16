@@ -239,7 +239,10 @@ INSTRUCCIONES:
 5. Incluye números específicos cuando sea relevante
 6. Si es una consulta sobre acciones (como registrar ventas), explica el proceso
 7. Para datos ambientales, menciona si hay alguna condición preocupante
-8. IMPORTANTE: Cuando menciones productos con stock bajo, SIEMPRE incluye la sede donde se encuentra cada producto (ej: "Torta de Chocolate: 8 unidades en Panadería Centro")
+8. IMPORTANTE: Cuando menciones productos con stock bajo, SIEMPRE incluye la sede donde se encuentra cada producto
+   - CORRECTO: "Torta de Chocolate: 8 unidades en Panadería Centro"
+   - INCORRECTO: "Torta de Chocolate: 8 unidades"
+   - La información de sede está disponible en el contexto - úsala SIEMPRE para productos con stock bajo
 
 TIPOS DE CONSULTAS QUE PUEDES MANEJAR:
 - Ventas y ingresos
@@ -253,12 +256,17 @@ TIPOS DE CONSULTAS QUE PUEDES MANEJAR:
 Responde en español de manera natural y conversacional.
 """
         
+        # Enhance query for inventory questions
+        enhanced_query = query
+        if query_type == "inventory" and any(word in query.lower() for word in ['stock', 'inventario', 'poco stock', 'low stock']):
+            enhanced_query = f"{query} - Recuerda incluir la sede (ubicación) para cada producto con stock bajo."
+        
         # Generate AI response
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": query}
+                {"role": "user", "content": enhanced_query}
             ],
             max_tokens=300,
             temperature=0.7
