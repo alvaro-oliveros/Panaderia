@@ -155,7 +155,7 @@
         
         sedeSelect.innerHTML = '<option value="">Seleccionar sede...</option>';
         
-        if (userData.userType === 'admin') {
+        if (userData.rol === 'admin') {
           // Admin can select any sede
           sedes.forEach(sede => {
             const option = document.createElement('option');
@@ -163,7 +163,7 @@
             option.textContent = sede.Nombre;
             sedeSelect.appendChild(option);
           });
-        } else if (userData.userType === 'bakery') {
+        } else if (userData.rol === 'usuario') {
           // Regular user can only add products to their assigned sedes
           if (userData.sedes && userData.sedes.length > 0) {
             userData.sedes.forEach(sedeInfo => {
@@ -224,7 +224,7 @@
       let url = `${API_URL}/productos/?limit=${limit}&offset=${offset}`;
       
       // For regular users, filter by their assigned sedes
-      if (userData.userType === 'bakery' && userData.userId) {
+      if (userData.rol === 'usuario' && userData.userId) {
         url += `&user_id=${userData.userId}`;
       }
       

@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (authResult) {
                 const userData = {
-                    userType: authResult.rol === 'admin' ? 'admin' : 'bakery',
                     username: authResult.username,
                     userId: authResult.idUsuarios,
                     rol: authResult.rol,

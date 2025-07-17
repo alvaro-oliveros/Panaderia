@@ -42,7 +42,7 @@
                         <h3>¡Hola! Soy tu asistente de panadería</h3>
                         <p>Puedes preguntarme sobre:</p>
                         <ul>
-                            <li>📊 Ventas e ingresos ("¿Cuánto vendimos hoy?")</li>
+                            <li>📊 Ventas e ingresos ("¿Cuánto vendimos esta semana?")</li>
                             <li>📦 Stock e inventario ("¿Qué productos tienen poco stock?")</li>
                             <li>🌡️ Condiciones ambientales ("¿Cómo está la temperatura?")</li>
                             <li>🏪 Rendimiento por sede ("¿Cuál sede vende más?")</li>
@@ -88,11 +88,11 @@
         
         <!-- Quick Action Buttons -->
         <div class="quick-actions">
-            <button class="quick-btn" onclick="quickQuery('¿Cuánto vendimos hoy?')">
-                💰 Ventas de hoy
-            </button>
-            <button class="quick-btn" onclick="quickQuery('¿Qué productos tienen poco stock?')">
+            <button class="quick-btn" onclick="quickQuery('¿Qué productos tienen stock bajo?')">
                 📦 Stock bajo
+            </button>
+            <button class="quick-btn" onclick="quickQuery('¿Cuáles fueron las ventas de esta semana?')">
+                💰 Ventas semanales
             </button>
             <button class="quick-btn" onclick="quickQuery('¿Cómo están las condiciones ambientales?')">
                 🌡️ Temperatura

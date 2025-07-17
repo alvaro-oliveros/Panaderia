@@ -1247,6 +1247,51 @@ input {
 .modal button[type="submit"] {
   width: 100%;
   margin-top: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  padding: 0.875rem 2.5rem !important;
+}
+
+.modal button[type="submit"]:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+}
+
+/* Force gradient styling for all submit buttons */
+button[type="submit"], 
+.form-group button[type="submit"],
+form button[type="submit"] {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  padding: 0.875rem 2.5rem !important;
+  min-width: 200px !important;
+}
+
+button[type="submit"]:hover, 
+.form-group button[type="submit"]:hover,
+form button[type="submit"]:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
 }
 
 /* AI Insights Styling */
@@ -1257,9 +1302,10 @@ input {
 
 .ai-section-header {
   color: #fff;
-  font-size: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
   margin: 1rem 0 0.5rem 0;
-  opacity: 0.9;
+  opacity: 1;
 }
 
 .ai-insight-item {

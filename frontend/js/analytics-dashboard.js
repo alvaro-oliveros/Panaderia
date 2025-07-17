@@ -467,8 +467,21 @@ function formatAIInsights(insights) {
         const trimmedLine = line.trim();
         if (!trimmedLine) continue;
         
-        // Handle headers (lines that are all caps or start with numbers)
-        if (trimmedLine.match(/^[0-9]+\./) || trimmedLine === trimmedLine.toUpperCase()) {
+        // Skip the unwanted line and similar variations
+        if (trimmedLine.includes('Análisis de los datos de la panadería peruana:') ||
+            trimmedLine.includes('análisis de los datos de la panadería peruana:') ||
+            trimmedLine.includes('Análisis de los datos de la panadería') ||
+            trimmedLine.includes('análisis de los datos de la panadería')) {
+            continue;
+        }
+        
+        // Handle headers (lines that are all caps, start with numbers, or are specific AI subtitles)
+        if (trimmedLine.match(/^[0-9]+\./) || 
+            trimmedLine === trimmedLine.toUpperCase() ||
+            trimmedLine.toLowerCase().includes('insights principales') ||
+            trimmedLine.toLowerCase().includes('recomendaciones específicas') ||
+            trimmedLine.toLowerCase().includes('alertas') ||
+            trimmedLine.toLowerCase().includes('oportunidades')) {
             formattedContent += `<h4 class="ai-section-header">${trimmedLine}</h4>`;
         } else if (trimmedLine.startsWith('-') || trimmedLine.startsWith('•')) {
             formattedContent += `<div class="ai-insight-item">${trimmedLine}</div>`;

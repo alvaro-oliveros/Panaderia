@@ -164,7 +164,7 @@ def login_usuario(login_data: schemas.UsuarioLogin, db: Session = Depends(get_db
     sedes_info = []
     if sede_ids:
         sedes = db.query(models.Sede).filter(models.Sede.idSedes.in_(sede_ids)).all()
-        sedes_info = [{"id": sede.idSedes, "nombre": sede.Nombre} for sede in sedes]
+        sedes_info = [{"idSedes": sede.idSedes, "Nombre": sede.Nombre} for sede in sedes]
     
     return {
         "idUsuarios": usuario.idUsuarios,
