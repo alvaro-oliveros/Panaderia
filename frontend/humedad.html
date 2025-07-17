@@ -34,7 +34,8 @@
   
   <main class="dashboard-content">
     <div class="management-container">
-      <div class="form-section">
+      <!-- Manual registration hidden since ESP32 handles data automatically -->
+      <div class="form-section" style="display: none;">
         <h2>Registrar Lectura de Humedad</h2>
         <form id="formHumedad">
           <div class="form-group">
@@ -80,7 +81,6 @@
               <th>Sensor</th>
               <th>Sede</th>
               <th>Fecha y Hora</th>
-              <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -91,30 +91,7 @@
     </div>
   </main>
 
-  <!-- Modal para editar humedad -->
-  <div id="modalEditar" class="modal" style="display: none;">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <h2>Editar Lectura de Humedad</h2>
-      <form id="formEditarHumedad">
-        <input type="hidden" id="editId">
-        
-        <div class="form-group">
-          <label for="editHumedad">Humedad (%):</label>
-          <input type="number" step="0.1" min="0" max="100" id="editHumedad" required>
-        </div>
-        
-        <div class="form-group">
-          <label for="editSensorId">Sensor:</label>
-          <select id="editSensorId" required>
-            <option value="">Seleccionar sensor</option>
-          </select>
-        </div>
-        
-        <button type="submit">Actualizar Humedad</button>
-      </form>
-    </div>
-  </div>
+  <!-- Edit modal removed - ESP32 data is read-only -->
 
   <script src="js/api.js"></script>
   <script src="js/humedad.js"></script>
