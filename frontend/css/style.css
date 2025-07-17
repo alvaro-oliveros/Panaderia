@@ -1347,61 +1347,6 @@ form button[type="submit"]:hover {
   border-color: rgba(255, 255, 255, 0.5);
 }
 
-/* FORCE BUTTON STYLING FOR SENSOR PAGES - CRITICAL CSS */
-#formSensor button[type="submit"],
-#formTemperatura button[type="submit"], 
-#formHumedad button[type="submit"],
-#formEditarSensor button[type="submit"],
-#formEditarTemperatura button[type="submit"],
-#formEditarHumedad button[type="submit"] {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 12px !important;
-  font-size: 1rem !important;
-  font-weight: 600 !important;
-  cursor: pointer !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
-  position: relative !important;
-  overflow: hidden !important;
-  padding: 0.875rem 2.5rem !important;
-  min-width: 200px !important;
-  display: block !important;
-  margin: 0 auto !important;
-}
-
-#formSensor button[type="submit"]:hover,
-#formTemperatura button[type="submit"]:hover,
-#formHumedad button[type="submit"]:hover,
-#formEditarSensor button[type="submit"]:hover,
-#formEditarTemperatura button[type="submit"]:hover,
-#formEditarHumedad button[type="submit"]:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
-  transform: translateY(-2px) scale(1.02) !important;
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
-}
-
-/* ULTRA SPECIFIC TARGETING FOR SENSOR PAGES */
-body #formSensor button[type="submit"],
-body #formTemperatura button[type="submit"], 
-body #formHumedad button[type="submit"] {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 12px !important;
-  font-size: 1rem !important;
-  font-weight: 600 !important;
-  cursor: pointer !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
-  position: relative !important;
-  overflow: hidden !important;
-  padding: 0.875rem 2.5rem !important;
-  min-width: 200px !important;
-  display: block !important;
-  margin: 0 auto !important;
-}
 
 .ai-loading {
   display: flex;

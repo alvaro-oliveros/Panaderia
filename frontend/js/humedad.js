@@ -12,11 +12,24 @@ document.addEventListener('DOMContentLoaded', function() {
     cargarSensores();
     cargarHumedades();
 
-    // Disable manual humidity form submission - ESP32 sensor data only
-    document.getElementById('formHumedad').addEventListener('submit', function(event) {
-        event.preventDefault();
-        alert('El registro manual de humedad está deshabilitado. Los datos son enviados automáticamente por los sensores ESP32.');
-    });
+    document.getElementById('formHumedad').addEventListener('submit', agregarHumedad);
+    document.getElementById('formEditarHumedad').addEventListener('submit', actualizarHumedad);
+    
+    // Modal handling
+    const modal = document.getElementById('modalEditar');
+    const closeBtn = document.getElementsByClassName('close')[0];
+    
+    closeBtn.onclick = function() {
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+    }
+    
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+        }
+    }
 });
 
 async function cargarSensores() {
@@ -33,14 +46,17 @@ async function cargarSensores() {
         
         const selectSensor = document.getElementById('sensor_id');
         const filtroSensor = document.getElementById('filtroSensor');
+        const editSelectSensor = document.getElementById('editSensorId');
         
         selectSensor.innerHTML = '<option value="">Seleccionar sensor</option>';
         filtroSensor.innerHTML = '<option value="">Todos los sensores</option>';
+        editSelectSensor.innerHTML = '<option value="">Seleccionar sensor</option>';
         
         sensores.forEach(sensor => {
             const option = `<option value="${sensor.idSensores}">${sensor.nombre} (${sensor.descripcion})</option>`;
             selectSensor.innerHTML += option;
             filtroSensor.innerHTML += option;
+            editSelectSensor.innerHTML += option;
         });
     } catch (error) {
         console.error('Error al cargar sensores:', error);
@@ -137,6 +153,7 @@ async function cargarHumedades() {
                     <td>${fecha}</td>
                     <td><span class="humidity-status ${humidityInfo.class}">${humidityInfo.status}</span></td>
                     <td>
+                        <button onclick="editarHumedad(${hum.idHumedad})" class="edit-btn">Editar</button>
                         <button onclick="eliminarHumedad(${hum.idHumedad})" class="delete-btn">Eliminar</button>
                     </td>
                 </tr>
@@ -207,6 +224,7 @@ async function mostrarHumedades(humedades) {
                 <td>${fecha}</td>
                 <td><span class="humidity-status ${humidityInfo.class}">${humidityInfo.status}</span></td>
                 <td>
+                    <button onclick="editarHumedad(${hum.idHumedad})" class="edit-btn">Editar</button>
                     <button onclick="eliminarHumedad(${hum.idHumedad})" class="delete-btn">Eliminar</button>
                 </td>
             </tr>
@@ -246,6 +264,58 @@ async function agregarHumedad(event) {
     }
 }
 
+
+async function editarHumedad(id) {
+    try {
+        const response = await fetch(`${API_URL}/humedad/${id}`);
+        const humedad = await response.json();
+        
+        document.getElementById('editId').value = humedad.idHumedad;
+        document.getElementById('editHumedad').value = humedad.Humedad;
+        document.getElementById('editSensorId').value = humedad.Sensor_id;
+        
+        const modal = document.getElementById('modalEditar');
+        modal.style.display = 'flex';
+        modal.classList.add('show');
+    } catch (error) {
+        console.error('Error al cargar humedad:', error);
+        alert('Error al cargar datos de la humedad');
+    }
+}
+
+async function actualizarHumedad(event) {
+    event.preventDefault();
+    
+    const id = document.getElementById('editId').value;
+    const humedadData = {
+        Humedad: parseFloat(document.getElementById('editHumedad').value),
+        Sensor_id: parseInt(document.getElementById('editSensorId').value)
+    };
+    
+    try {
+        const response = await fetch(`${API_URL}/humedad/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(humedadData)
+        });
+        
+        if (response.ok) {
+            alert('Humedad actualizada correctamente');
+            const modal = document.getElementById('modalEditar');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            cargarHumedades();
+        } else {
+            const error = await response.json();
+            alert('Error al actualizar humedad: ' + (error.detail || 'Error desconocido'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al actualizar humedad');
+    }
+}
 
 async function eliminarHumedad(id) {
     if (confirm('¿Estás seguro de que quieres eliminar esta lectura de humedad?')) {
