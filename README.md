@@ -1,6 +1,33 @@
 # 🍞 Sistema de Gestión de Panadería
 
+![Python](https://img.shields.io/badge/Python-3.8+-3776AB) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![SQLite](https://img.shields.io/badge/SQLite-DB-003B57) ![JavaScript](https://img.shields.io/badge/JavaScript-Vanilla-F7DF1E) ![OpenAI](https://img.shields.io/badge/OpenAI-Whisper%20%2B%20GPT-412991) ![Claude](https://img.shields.io/badge/Claude-Anthropic-CC785C)
+
 Un sistema completo de gestión para múltiples panaderías con autenticación basada en roles, IoT sensor integration, AI-powered analytics, y control de acceso por sede.
+
+## 📸 Demo / Capturas
+
+_(Capturas reales del sistema, extraídas del informe final del curso — ver `docs/screenshots/`)_
+
+| | |
+|---|---|
+| ![Login](docs/screenshots/01-login.png) | ![Dashboard](docs/screenshots/02-dashboard.png) |
+| Login | Dashboard con KPIs |
+| ![Gestión de usuarios](docs/screenshots/03-gestion-usuarios.png) | ![Asistente IA por voz](docs/screenshots/04-asistente-ia.png) |
+| Gestión de usuarios | Asistente IA por voz (Whisper + GPT) |
+| ![Insights IA](docs/screenshots/05-insights-ia.png) | ![Hardware IoT](docs/screenshots/07-hardware-iot.jpg) |
+| Insights inteligentes | Sensores IoT (ESP32 + DHT22) armados en protoboard |
+
+**Arquitectura del sistema:**
+
+![Arquitectura](docs/screenshots/06-arquitectura.png)
+
+## 🛠️ Stack Técnico
+
+- **Backend**: FastAPI + SQLAlchemy + SQLite
+- **Frontend**: HTML5 + CSS3 + Vanilla JavaScript
+- **AI**: Claude (Anthropic), OpenAI API integration
+- **IoT**: ESP32 + Arduino + DHT22 sensors
+- **Analytics**: Real-time dashboard con AI insights
 
 ## 🚀 Inicio Rápido
 
@@ -8,6 +35,13 @@ Un sistema completo de gestión para múltiples panaderías con autenticación b
 - Python 3.8+
 - SQLite3
 - Navegador web moderno
+
+### Clonar el Repositorio
+
+```bash
+git clone https://github.com/alvaro-oliveros/Panaderia.git
+cd Panaderia
+```
 
 ### Configuración de Variables de Entorno
 
@@ -139,6 +173,8 @@ El script automáticamente:
 - No puede gestionar sedes ni usuarios
 - Puede agregar productos y movimientos solo a sus sedes asignadas
 
+> Estas credenciales son datos de demostración locales, pensadas solo para probar el sistema en desarrollo.
+
 ## 🏗️ Estructura del Sistema
 
 ### Backend (FastAPI)
@@ -154,7 +190,12 @@ backend/
 │       ├── productos.py
 │       ├── sedes.py
 │       ├── movimientos.py
-│       └── usuarios.py
+│       ├── usuarios.py
+│       ├── sensores.py     # CRUD de sensores IoT
+│       ├── temperatura.py  # Lecturas de temperatura
+│       ├── humedad.py      # Lecturas de humedad
+│       ├── ai_analytics.py # Insights con IA (Claude)
+│       └── voice_chat.py   # Chat por voz (Whisper + GPT)
 └── panaderia.db        # Base de datos SQLite
 ```
 
@@ -334,6 +375,16 @@ frontend/
 - `GET /voice/sessions/{user_id}` - Listar sesiones de chat del usuario
 - `POST /voice/sessions/{session_id}/close` - Cerrar sesión de chat
 
+### Sensores IoT
+- `POST /sensores/` · `GET /sensores/` · `GET /sensores/{id}` · `PUT /sensores/{id}` · `DELETE /sensores/{id}` - CRUD de sensores
+- `POST /temperatura/` · `GET /temperatura/` · `GET /temperatura/{id}` · `PUT /temperatura/{id}` · `DELETE /temperatura/{id}` - Lecturas de temperatura
+- `POST /humedad/` · `GET /humedad/` · `GET /humedad/{id}` · `PUT /humedad/{id}` · `DELETE /humedad/{id}` - Lecturas de humedad
+
+### AI Analytics
+- `GET /ai/business-insights` - Insights generales del negocio
+- `GET /ai/product-analysis/{product_id}` - Análisis de un producto específico
+- `GET /ai/daily-summary` - Resumen diario generado con IA
+
 ## 🎯 Casos de Uso
 
 ### Escenario 1: Administrador
@@ -482,12 +533,10 @@ Clase de configuración centralizada que maneja:
 - Configuración de CORS
 - Detección automática de rutas absolutas para SQLite
 
+## 📄 Licencia
 
-**🔧 Stack Técnico:**
-- **Backend**: FastAPI + SQLAlchemy + SQLite
-- **Frontend**: HTML5 + CSS3 + Vanilla JavaScript
-- **AI**: Claude (Anthropic), OpenAI API integration
-- **IoT**: ESP32 + Arduino + DHT22 sensors
-- **Analytics**: Real-time dashboard with AI insights
+Este proyecto no incluye actualmente un archivo de licencia. Si deseas que otros puedan reutilizar el código libremente, se sugiere licencia **MIT**.
+
+---
 
 **Para soporte técnico, revisar los logs del servidor backend y la consola del navegador para errores de frontend.**
