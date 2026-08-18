@@ -1,8 +1,12 @@
-# 🍞 Sistema de Gestión de Panadería
+# 🍞 PanTec — Sistema de Gestión de Panadería
 
 ![Python](https://img.shields.io/badge/Python-3.8+-3776AB) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![SQLite](https://img.shields.io/badge/SQLite-DB-003B57) ![JavaScript](https://img.shields.io/badge/JavaScript-Vanilla-F7DF1E) ![OpenAI](https://img.shields.io/badge/OpenAI-Whisper%20%2B%20GPT-412991) ![Claude](https://img.shields.io/badge/Claude-Anthropic-CC785C)
 
-Un sistema completo de gestión para múltiples panaderías con autenticación basada en roles, IoT sensor integration, AI-powered analytics, y control de acceso por sede.
+Un sistema completo de gestión para múltiples panaderías con autenticación basada en roles, integración de sensores IoT (ESP32 + DHT22) para monitoreo ambiental, analítica con IA, y control de acceso por sede. Desplegado en AWS EC2 con Docker, Nginx y DuckDNS.
+
+> 🌐 Desplegado en vivo en AWS EC2 durante el curso (`panaderia-icc.duckdns.org`) — actualmente offline para evitar costos fuera de la capa gratuita de AWS. El proyecto se puede correr localmente siguiendo los pasos de abajo.
+
+> 👥 Proyecto grupal (curso de Cognitive Computing, UTEC) desarrollado con 2 compañeros más. Mi rol: desarrollo full-stack (backend FastAPI + frontend) e integración IoT/hardware (ESP32 + DHT22, comunicación con el backend).
 
 ## 📸 Demo / Capturas
 
@@ -39,8 +43,8 @@ _(Capturas reales del sistema, extraídas del informe final del curso — ver `d
 ### Clonar el Repositorio
 
 ```bash
-git clone https://github.com/alvaro-oliveros/Panaderia.git
-cd Panaderia
+git clone https://github.com/alvaro-oliveros/pantec-bakery-iot.git
+cd pantec-bakery-iot
 ```
 
 ### Configuración de Variables de Entorno
